@@ -30,6 +30,10 @@ class Deck:
         included_cards: list[Card] = [card for card in self.cards if card == other]
         return Deck(included_cards)
 
+    def __add__(self, other: Deck) -> Deck:
+        self.cards.extend(other.cards)
+        return self
+
     def __len__(self) -> int:
         return len(self.cards)
 
@@ -57,20 +61,36 @@ class Deck:
         except IndexError:
             return None
 
+    def in_range(self, other: Card) -> Deck:
+        if other.stats().range:
+            pass
+        return self
+
+    def __next__(self) -> Card:
+        if self.index >= len(self):
+            raise StopIteration
+        next_card: Card = self.cards[self.index]
+        self.index += 1
+        return next_card
+
+    def __iter__(self) -> Deck:
+        self.index = 0
+        return self
+
 
 class Card:
     ID: int = 0
 
     def __init__(self, name: str, storage: Box, levels: list[Level], priority: int, is_enemy: bool = False,
-                 level: int = 1, hidden: bool = False):
+                 hidden: bool = False):
         self.name: str = name
         self.storage: Box = storage
         self.levels: list[Level] = levels
         self.priority: int = priority
-        self.level: int = level
         self.hidden: bool = hidden
         self.is_enemy: bool = is_enemy
 
+        self.level: int = 1
         self.inflow: Flow = Flow()
         self.outflow: Flow = Flow()
         self.update_flows()
@@ -79,7 +99,7 @@ class Card:
         Card.ID += 1
 
     def __eq__(self, other):
-        return self.name == other.name and self.id == other.id
+        return self.name == other.name
 
     def __hash__(self) -> int:
         return hash((self.name, self.id))
@@ -101,14 +121,12 @@ class Card:
         return f"{self.name} ({self.id})"
 
     def __copy__(self) -> Card:
-        new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.level,
-                              self.hidden)
+        new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.hidden)
         return new_card
 
     def __deepcopy__(self, memo) -> Card:
         new_storage: Box = copy.deepcopy(self.storage, memo)
-        new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.level,
-                              self.hidden)
+        new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.hidden)
         memo[id(self)] = new_card = new_card
         return new_card
 
@@ -119,9 +137,17 @@ class Card:
         self.inflow: Flow = self.stats().flow.get_inflow()
         self.outflow: Flow = self.stats().flow.get_outflow()
 
+    def produce(self) -> None:
+        self.storage += self.outflow
+
+    def collect(self) -> None:
+        return
+
 
 class Level:
-    def __init__(self, price: int, capacity: Box, flow: Flow, unlocked: bool = False, affect_range: int = 0):
+    def __init__(self, level: int, capacity: Box, flow: Flow, price: int, unlocked: bool = False,
+                 affect_range: int = 0):
+        self.level = level
         self.price: int = price
         self.capacity: Box = capacity
         self.flow: Flow = flow
@@ -140,5 +166,51 @@ class Level:
 
 
 class Blueprints:
-    CORE = Card("Core", Box(health=1000), [Level(0, Box(health=1000, energy=60), Flow(energy=6), True)], 0, hidden=True)
-    GENERATOR = Card("Generator", Box(health=100), [Level(60, Box(health=100), Flow(energy=12), True)], 1)
+    CORE = Card("Core", Box(health=1000), [
+        Level(1, Box(health=1000, material=30, energy=60, starbit=15000), Flow(health=20, energy=6), 0, True)
+    ], 0, hidden=True)
+    GENERATOR = Card("Generator", Box(health=100), [
+        Level(1, Box(health=100), Flow(energy=12), 60, True),
+        Level(2, Box(health=135), Flow(energy=36), 120, False),
+        Level(3, Box(health=180), Flow(energy=72), 180, False),
+    ], 1)
+    MINE = Card("Laser", Box(health=100), [
+        Level(1, Box(health=100), Flow(material=+6, energy=-8), 80, True),
+        Level(2, Box(health=120), Flow(material=+18, energy=-14), 160, False),
+        Level(3, Box(health=140), Flow(material=+64, energy=-32), 340, False),
+    ], 2)
+    FACTORY = Card("Factory", Box(health=100), [
+        Level(1, Box(health=100), Flow(material=-6, energy=-3, starbit=+24), 100, True),
+    ], 3)
+    STORAGE = Card("Storage", Box(health=120), [
+        Level(1, Box(health=120, material=60), Flow(), 150, True),
+    ], 4)
+    POWER_BOX = Card("Power Box", Box(health=120), [
+        Level(1, Box(health=120, energy=80), Flow(), 150, True),
+    ], 4)
+    # not required to work
+    HYPERBEAM = Card("Hyperbeam", Box(health=120), [
+        Level(1, Box(health=120), Flow(health=-15, energy=-20), 200, True),
+    ], 6)
+    ENEMY = Card("Enemy", Box(health=60), [
+        Level(1, Box(health=60), Flow(health=-12), 80, True),
+    ], 9, True, True)
+    BOOST = Card("Boost", Box(health=48), [
+        Level(1, Box(health=48), Flow(energy=-20, boost=+50), 400, True),
+    ], 5)
+    REGENERATOR = Card("Regenerator", Box(health=100), [
+        Level(1, Box(health=100), Flow(health=+10, energy=-5), 250, True),
+    ], 7)
+    SHIELD = Card("Shield", Box(health=64), [
+        Level(1, Box(health=64), Flow(energy=-20, shield=+10), 500, True),
+    ], 8)
+    # don't expect these to work
+    DIMENSION = Card("Pocket Dimension", Box(health=0), [
+        Level(1, Box(health=0), Flow(energy=-100), 900, True),
+    ], 8)
+    PARALLEL = Card("Parallel Stacker", Box(health=0), [
+        Level(1, Box(health=0), Flow(energy=-110), 1000, True),
+    ], 8)
+    DESTROYER = Card("Destroyer Base", Box(health=200), [
+        Level(1, Box(health=200), Flow(health=-30, energy=-50), 1200, True),
+    ], 6)

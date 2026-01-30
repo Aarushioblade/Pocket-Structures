@@ -67,13 +67,15 @@ class Box:
         return new_box
 
     # this goes left to right. right to left is not necessarily needed.
-    def __iadd__(self, other: Flow) -> None:
+    def __iadd__(self, other: Flow) -> Box:
         for i in range(len(self.stuff)):
             self.stuff[i] += other.stuff[i]
+        return self
 
-    def __isub__(self, other: Flow) -> None:
+    def __isub__(self, other: Flow) -> Box:
         for i in range(len(self.stuff)):
             self.stuff[i] -= other.stuff[i]
+        return self
 
     def __add__(self, other: Flow) -> Box:
         new_stuff: list[int] = []
