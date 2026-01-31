@@ -47,16 +47,16 @@ class Box:
         return f"Flow({self.stuff})"
 
     def __init__(self, health=0, material=0, energy=0, starbit=0, shield=0, boost=0, packed: list[int] = None):
-        self.stuff: list[int] = []
+        self.stuff: list[int] = [0, 0, 0, 0, 0, 0]
         if packed:
             self.stuff = packed
             return
-        self.stuff.append(health)
-        self.stuff.append(material)
-        self.stuff.append(energy)
-        self.stuff.append(starbit)
-        self.stuff.append(shield)
-        self.stuff.append(boost)
+        self.stuff[Box.Types.HEALTH.value] = health
+        self.stuff[Box.Types.MATERIAL.value] = material
+        self.stuff[Box.Types.ENERGY.value] = energy
+        self.stuff[Box.Types.STARBIT.value] = starbit
+        self.stuff[Box.Types.SHIELD.value] = shield
+        self.stuff[Box.Types.BOOST.value] = boost
 
     def __copy__(self) -> Box:
         return Box(packed=self.stuff)

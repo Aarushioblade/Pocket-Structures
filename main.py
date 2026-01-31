@@ -12,10 +12,13 @@ def main():
     deck += Blueprints.FACTORY
     deck += Blueprints.GENERATOR
     deck += Blueprints.GENERATOR
+    deck += Blueprints.SHIELD
+    deck += Blueprints.ENEMY
+    deck += Blueprints.BOOST
     deck[2].level_up()
     for card in deck:
         print(card)
-    for i in range(3): game.calculate()
+    for i in range(1): game.calculate()
     print(deck)
 
 
