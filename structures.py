@@ -146,6 +146,7 @@ class Card:
         self.update_flows()
         self.charge: Box = Box()
         self.height: int = 12
+        self.destroyed: bool = False
         self.id: int = Card.ID
         Card.ID += 1
 
@@ -206,12 +207,19 @@ class Card:
         if self.outflow == Flow(): return
         print(f"PRODUCE: {self.name} >> {self.outflow}")
 
+    def is_destroyed(self):
+        if self.destroyed: return True
+        self.destroyed = self.storage.stuff[Box.Types.HEALTH.value] <= 0
+        return self.destroyed
+
     def reset(self) -> None:
         self.charge = Box()
         excess: Flow = self.get_excess()
         if excess == Flow(): return
         self.storage -= excess
         print(f"RESET: {self.name} -> {excess} -> Void")
+        if self.is_destroyed():
+            print(f"RESET: {self.name} destroyed!")
 
     def get_excess(self):
         excess: Box = self.storage - self.stats().capacity.to_flow()

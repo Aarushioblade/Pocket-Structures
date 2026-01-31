@@ -18,7 +18,9 @@ def main():
     deck += Blueprints.MINE
     deck += Blueprints.BOOST
     deck += Blueprints.SHIELD
-    # deck += Blueprints.ENEMY
+    # deck += Blueprints.SHIELD
+    deck += Blueprints.ENEMY
+    deck += Blueprints.ENEMY
     # deck[2].level_up()
     deck.sorted_by_distance(deck[1])
     for i in range(1): game.calculate()

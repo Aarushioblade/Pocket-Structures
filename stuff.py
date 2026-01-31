@@ -158,7 +158,7 @@ class Box:
         self.stuff[health_type] -= attack
         for i in range(len(self.stuff)):
             if i in [health_type, shield_type]: continue
-            self.stuff[i] = min(self.stuff[i] - flow.stuff[i], 0)
+            self.stuff[i] = max(self.stuff[i] - flow.stuff[i], 0)
 
 
 class Flow(Box):
