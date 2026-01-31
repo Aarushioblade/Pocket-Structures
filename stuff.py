@@ -120,13 +120,22 @@ class Box:
     def __setitem__(self, stuff_type: Types, value):
         self.stuff[stuff_type.value] = value
 
-    def filter_to_status_flows(self) -> Flow:
+    def only(self, *types: Box.Types) -> Flow:
         new_stuff: list[int] = []
         for i in range(len(self.stuff)):
-            if Box.Types(i) in [Box.Types.HEALTH, Box.Types.BOOST, Box.Types.SHIELD]:
+            if Box.Types(i) in types:
                 new_stuff.append(self.stuff[i])
             else:
                 new_stuff.append(0)
+        return Flow(packed=new_stuff)
+
+    def without(self, *types: Box.Types) -> Flow:
+        new_stuff: list[int] = []
+        for i in range(len(self.stuff)):
+            if Box.Types(i) in types:
+                new_stuff.append(0)
+            else:
+                new_stuff.append(self.stuff[i])
         return Flow(packed=new_stuff)
 
     def to_flow(self) -> Flow:

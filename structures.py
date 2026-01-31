@@ -102,12 +102,12 @@ class Card:
     ID: int = 0
 
     def __init__(self, name: str, storage: Box, levels: list[Level], priority: int, is_enemy: bool = False,
-                 hidden: bool = False):
+                 is_hidden: bool = False):
         self.name: str = name
         self.storage: Box = storage
         self.levels: list[Level] = levels
         self.priority: int = priority
-        self.hidden: bool = hidden
+        self.is_hidden: bool = is_hidden
         self.is_enemy: bool = is_enemy
 
         self.level: int = 1
@@ -143,12 +143,12 @@ class Card:
         return f"{self.name} ({self.id})"
 
     def __copy__(self) -> Card:
-        new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.hidden)
+        new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.is_hidden)
         return new_card
 
     def __deepcopy__(self, memo) -> Card:
         new_storage: Box = copy.deepcopy(self.storage, memo)
-        new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.hidden)
+        new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.is_hidden)
         memo[id(self)] = new_card = new_card
         return new_card
 
@@ -194,33 +194,42 @@ class Card:
         self.charge += transfer
         print(f"COLLECT: {self.name} <- {transfer} <- {other.name}")
 
-    def get_storage_transfer(self, other: Card) -> Flow | None:
+    def get_storage_transfer(self, other: Card) -> Flow:
         maximum_to_receive: Box = other.stats().capacity - other.storage.to_flow()
         transfer: Flow = maximum_to_receive.to_flow().get_outflow() % self.get_excess()
-        if transfer == Flow(): return None
         return transfer
 
     def store(self, other: Card) -> None:
         if other.is_enemy: return
         transfer: Flow = self.get_storage_transfer(other)
-        if transfer is None: return
+        if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
         print(f"STORE: {self.name} -> {transfer} -> {other.name}")
 
     def send_to(self, other: Card) -> None:
-        if self.is_enemy and other.is_enemy: return
-        other.storage += self.stats().flow
-        print(f"SEND: {self.name} -> {self.stats().flow} -> {other.name}")
+        flow = self.stats().effect_flow
+        if not self.is_enemy:
+            if other.is_enemy:
+                flow = flow.only(Box.Types.HEALTH).get_inflow()
+            else:
+                flow = flow.get_outflow()
+        elif other.is_enemy:
+            return
+        if flow == Flow(): return
+        other.storage += flow
+        print(f"SEND: {self.name} -> {flow} -> {other.name}")
 
 
 class Level:
-    def __init__(self, level: int, capacity: Box, flow: Flow, price: int, unlocked: bool = False,
-                 effect_range: int = 0):
+    def __init__(self, level: int, capacity: Box, flow: Flow, price: int = 0, unlocked: bool = False,
+                 effect_range: int = 0, effect_flow: Flow = None):
         self.level = level
         self.price: int = price
         self.capacity: Box = capacity
         self.flow: Flow = flow
+        if not effect_flow: effect_flow = Flow()
+        self.effect_flow = effect_flow
         self.range: int = effect_range
         self.unlocked: bool = unlocked
 
@@ -238,8 +247,8 @@ class Level:
 class Blueprints:
     CORE = Card("Core", Box(health=1000), [
         Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=240, boost=100),
-              Flow(health=20, energy=6), 0, True)
-    ], 0, hidden=True)
+              Flow(energy=6), price=0, unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
+    ], priority=0, is_hidden=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100), Flow(energy=12), 60, True),
         Level(2, Box(health=135), Flow(energy=36), 120, False),
@@ -261,19 +270,19 @@ class Blueprints:
     ], 4)
     # not required to work
     HYPERBEAM = Card("Hyperbeam", Box(health=120), [
-        Level(1, Box(health=120), Flow(health=-15, energy=-20), 200, True, 2),
+        Level(1, Box(health=120), Flow(energy=-20), 200, True, 2, Flow(health=-20)),
     ], 6)
     ENEMY = Card("Enemy", Box(health=60), [
-        Level(1, Box(health=60), Flow(health=-12), 80, True, 1),
-    ], 9, True, True)
+        Level(1, Box(health=60), Flow(), 80, True, 1, effect_flow=Flow(health=-15)),
+    ], 9, is_enemy=True, is_hidden=True)
     BOOST = Card("Boost", Box(health=48), [
-        Level(1, Box(health=48), Flow(energy=-20, boost=+50), 400, True, 1),
+        Level(1, Box(health=48), Flow(energy=-20), 400, True, 1, Flow(boost=+50)),
     ], 5)
     REGENERATOR = Card("Regenerator", Box(health=100), [
-        Level(1, Box(health=100), Flow(health=+10, energy=-5), 250, True, 2),
+        Level(1, Box(health=100), Flow(energy=-5), 250, True, 3, Flow(health=+10)),
     ], 7)
     SHIELD = Card("Shield", Box(health=64), [
-        Level(1, Box(health=64), Flow(energy=-20, shield=+10), 500, True, 3),
+        Level(1, Box(health=64), Flow(energy=-20), 500, True, 2, Flow(shield=+50)),
     ], 8)
     # don't expect these to work
     DIMENSION = Card("Pocket Dimension", Box(health=0), [

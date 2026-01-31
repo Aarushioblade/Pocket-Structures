@@ -22,6 +22,10 @@ class Game:
         for other in self.deck.sorted_by_distance(card):
             card.collect(other)
 
+    def send_to_other_cards(self, card: Card) -> None:
+        for target in self.deck.in_range(card):
+            card.send_to(target)
+
     def calculate(self) -> None:
         print(f"\n - Turn {self.turn} - \n")
         self.turn += 1
@@ -30,14 +34,10 @@ class Game:
             for card in self.deck.sorted_by_distance(Blueprints.CORE):
                 if card.priority != priority: continue
                 if self.get_available_box() < card.inflow: continue
-                # card.produce()
-                if len(self.deck.in_range(card)) > 1:
-                    for target in self.deck.in_range(card):
-                        card.send_to(target)
-                else:
-                    self.collect_from_other_cards(card)
-                    card.produce()
-                    self.store_to_other_cards(card)
+                self.collect_from_other_cards(card)
+                self.send_to_other_cards(card)
+                card.produce()
+                self.store_to_other_cards(card)
 
         for card in self.deck.sorted_by_distance(Blueprints.CORE):
             self.store_to_other_cards(card)
