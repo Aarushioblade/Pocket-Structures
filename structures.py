@@ -26,8 +26,11 @@ class Deck:
         excluded_cards: list[Card] = [card for card in self.cards if card != other]
         return Deck(excluded_cards)
 
-    def __mul__(self, other: Card) -> Deck:
-        included_cards: list[Card] = [card for card in self.cards if card == other]
+    def __mul__(self, other: Card | list[Card]) -> Deck:
+        if isinstance(other, list):
+            included_cards: list[Card] = [card for card in self.cards if card in other]
+        else:
+            included_cards: list[Card] = [card for card in self.cards if card == other]
         return Deck(included_cards)
 
     def __add__(self, other: Deck) -> Deck:
@@ -62,19 +65,27 @@ class Deck:
             return None
 
     def in_range(self, other: Card) -> Deck:
-        if other.stats().range:
-            pass
+        # if other.stats().range:
+        #    pass
         return self
 
     def __next__(self) -> Card:
-        if self.index >= len(self):
+        if self.next_card_number >= len(self):
             raise StopIteration
-        next_card: Card = self.cards[self.index]
-        self.index += 1
+        closest_id: int = 0
+        next_card: Card = self.cards[0]
+        for card in self.cards:
+            if card.id <= self.last_id: continue
+            if card.id > closest_id != 0: continue
+            closest_id = card.id
+            next_card = card
+        self.next_card_number += 1
+        self.last_id = closest_id
         return next_card
 
     def __iter__(self) -> Deck:
-        self.index = 0
+        self.next_card_number = 0
+        self.last_id = 0
         return self
 
 
@@ -130,6 +141,13 @@ class Card:
         memo[id(self)] = new_card = new_card
         return new_card
 
+    def __add__(self, other: Card) -> list[Card]:
+        return [self, other]
+
+    def __radd__(self, other: list[Card]) -> list[Card]:
+        other.append(self)
+        return other
+
     def stats(self) -> Level:
         return self.levels[self.level - 1]
 
@@ -140,7 +158,7 @@ class Card:
     def produce(self) -> None:
         self.storage += self.outflow
 
-    def collect(self) -> None:
+    def collect(self, other: Card) -> None:
         return
 
 
