@@ -120,6 +120,12 @@ class Box:
     def __setitem__(self, stuff_type: Types, value):
         self.stuff[stuff_type.value] = value
 
+    def __neg__(self) -> Flow:
+        new_flow: list[int] = []
+        for i in range(len(self.stuff)):
+            new_flow.append(-self.stuff[i])
+        return Flow(packed=new_flow)
+
     def only(self, *types: Box.Types) -> Flow:
         new_stuff: list[int] = []
         for i in range(len(self.stuff)):

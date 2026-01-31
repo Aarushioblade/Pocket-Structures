@@ -44,7 +44,7 @@ class Deck:
         return len(self.cards)
 
     def __str__(self) -> str:
-        string: str = ""
+        string: str = "\n"
         for card in self.cards:
             string += f"{card}\n"
         return string
@@ -80,18 +80,47 @@ class Deck:
                 cards_in_range.append(sorted_deck[x])
         return cards_in_range
 
-    def sorted_by_distance(self, card: Card) -> list[Card]:
+    def find(self, card: Card) -> int | None:
+        for index, other in enumerate(self.cards):
+            if other.name == card.name:
+                return index
+        return None
+
+    def get_core(self) -> Card | None:
+        for card in self.cards:
+            if card.name == Blueprints.CORE.name:
+                return card
+        return None
+
+    def from_id(self, card_id: int) -> Card | None:
+        for card in self.cards:
+            if card.id == card_id:
+                return card
+        return None
+
+    def sorted_by_distance(self, card: Card | None = None) -> list[Card]:
         new_cards: list[Card] = []
+        banned_id: list[int] = []
+        if card is None:
+            card = self.get_core()
+        start_index = self.cards.index(card)
         for _ in self.cards:
-            closest_distance = 999999999999
-            closest_card = card
-            for x in range(len(self.cards)):
-                if self.cards[x] in new_cards: continue
-                distance = abs(x - self.cards.index(card))
-                if distance < closest_distance:
-                    closest_card = self.cards[x]
-                    closest_distance = distance
-            new_cards.append(closest_card)
+            new = None
+            local_closest_distance = -1
+            for index, test in enumerate(self.cards):
+                if test.id in banned_id:
+                    # print(f"{test.id} is banned")
+                    continue
+                distance = abs(index - start_index)
+                if local_closest_distance == -1 or distance <= local_closest_distance:
+                    local_closest_distance = distance
+                    new = test
+            if new is None:
+                raise ValueError
+            new_cards.append(new)
+            banned_id.append(new.id)
+
+        # print(f"Closest cards to {card.name}: \n{new_cards}")
         return new_cards
 
     def __copy__(self) -> Deck:
@@ -120,7 +149,7 @@ class Card:
         Card.ID += 1
 
     def __eq__(self, other):
-        return self.name == other.name
+        return self.id == other.id
 
     def __hash__(self) -> int:
         return hash((self.name, self.id))
@@ -209,16 +238,10 @@ class Card:
 
     def send_to(self, other: Card) -> None:
         flow = self.stats().effect_flow
-        if not self.is_enemy:
-            if other.is_enemy:
-                flow = flow.get_inflow()
-            else:
-                flow = flow.get_outflow()
+        if self.is_enemy == other.is_enemy:
+            flow = flow.get_outflow()
         else:
-            if other.is_enemy:
-                flow = flow.get_outflow()
-            else:
-                flow = flow.get_inflow()
+            flow = -flow.get_inflow()
         if flow == Flow(): return
         other.storage += flow
         print(f"SEND: {self.name} -> {flow} -> {other.name}")
@@ -251,7 +274,7 @@ class Level:
 class Blueprints:
     CORE = Card("Core", Box(health=1000), [
         Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=240, boost=100),
-              Flow(energy=6), price=0, unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
+              Flow(energy=600), price=0, unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
     ], priority=0, is_hidden=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100), Flow(energy=12), 60, True),
@@ -277,7 +300,7 @@ class Blueprints:
         Level(1, Box(health=120), Flow(energy=-20), 200, True, 2, Flow(health=-20)),
     ], 6)
     ENEMY = Card("Enemy", Box(health=60), [
-        Level(1, Box(health=60), Flow(), 80, True, 1, effect_flow=Flow(health=-15)),
+        Level(1, Box(health=60), Flow(), 80, True, 1, effect_flow=Flow(health=-15, energy=+5)),
     ], 9, is_enemy=True, is_hidden=True)
     BOOST = Card("Boost", Box(health=48), [
         Level(1, Box(health=48), Flow(energy=-20), 400, True, 1, Flow(boost=+50)),
