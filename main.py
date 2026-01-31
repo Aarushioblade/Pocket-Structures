@@ -7,13 +7,13 @@ def main():
     deck = Deck()
     game = Game(deck)
     # deck += Blueprints.CORE
-    deck += Blueprints.POWER_BOX
+    deck += Blueprints.CORE
     deck += Blueprints.ENEMY
     deck += Blueprints.GENERATOR
     deck += Blueprints.POWER_BOX
-    for card in deck.sorted_by_distance(Blueprints.POWER_BOX):
+    for card in deck.sorted_by_distance(Blueprints.CORE):
         print(card)
-    for i in range(6): game.calculate()
+    for i in range(1): game.calculate()
     print(deck)
 
 

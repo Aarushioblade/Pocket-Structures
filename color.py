@@ -15,3 +15,6 @@ class Color(Enum):
 
     def __radd__(self, other: str) -> str:
         return other + str(self.value)
+
+    def __add__(self, other: str) -> str:
+        return str(self.value) + other

@@ -70,10 +70,15 @@ class Deck:
         except IndexError:
             return None
 
-    def in_range(self, other: Card) -> Deck:
-        if other.stats().range:
-            pass
-        return self
+    def in_range(self, other: Card) -> list[Card]:
+        max_distance = other.stats().range
+        cards_in_range: list[Card] = []
+        sorted_deck = self.cards  # self.sorted_by_distance(other)
+        for x in range(len(sorted_deck)):
+            distance = abs(x - sorted_deck.index(other))
+            if distance <= max_distance:
+                cards_in_range.append(sorted_deck[x])
+        return cards_in_range
 
     def sorted_by_distance(self, card: Card) -> list[Card]:
         new_cards: list[Card] = []
@@ -196,21 +201,27 @@ class Card:
         return transfer
 
     def store(self, other: Card) -> None:
+        if other.is_enemy: return
         transfer: Flow = self.get_storage_transfer(other)
         if transfer is None: return
         self.storage -= transfer
         other.storage += transfer
         print(f"STORE: {self.name} -> {transfer} -> {other.name}")
 
+    def send_to(self, other: Card) -> None:
+        if self.is_enemy and other.is_enemy: return
+        other.storage += self.stats().flow
+        print(f"SEND: {self.name} -> {self.stats().flow} -> {other.name}")
+
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: int, unlocked: bool = False,
-                 affect_range: int = 0):
+                 effect_range: int = 0):
         self.level = level
         self.price: int = price
         self.capacity: Box = capacity
         self.flow: Flow = flow
-        self.range: int = affect_range
+        self.range: int = effect_range
         self.unlocked: bool = unlocked
 
     def __str__(self) -> str:
@@ -250,19 +261,19 @@ class Blueprints:
     ], 4)
     # not required to work
     HYPERBEAM = Card("Hyperbeam", Box(health=120), [
-        Level(1, Box(health=120), Flow(health=-15, energy=-20), 200, True),
+        Level(1, Box(health=120), Flow(health=-15, energy=-20), 200, True, 2),
     ], 6)
     ENEMY = Card("Enemy", Box(health=60), [
-        Level(1, Box(health=60), Flow(health=-12), 80, True),
+        Level(1, Box(health=60), Flow(health=-12), 80, True, 1),
     ], 9, True, True)
     BOOST = Card("Boost", Box(health=48), [
-        Level(1, Box(health=48), Flow(energy=-20, boost=+50), 400, True),
+        Level(1, Box(health=48), Flow(energy=-20, boost=+50), 400, True, 1),
     ], 5)
     REGENERATOR = Card("Regenerator", Box(health=100), [
-        Level(1, Box(health=100), Flow(health=+10, energy=-5), 250, True),
+        Level(1, Box(health=100), Flow(health=+10, energy=-5), 250, True, 2),
     ], 7)
     SHIELD = Card("Shield", Box(health=64), [
-        Level(1, Box(health=64), Flow(energy=-20, shield=+10), 500, True),
+        Level(1, Box(health=64), Flow(energy=-20, shield=+10), 500, True, 3),
     ], 8)
     # don't expect these to work
     DIMENSION = Card("Pocket Dimension", Box(health=0), [

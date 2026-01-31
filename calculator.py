@@ -9,7 +9,7 @@ class Game:
 
     def get_available_box(self) -> Box:
         available_box = Box()
-        for card in self.deck.sorted_by_distance(Blueprints.ENEMY):
+        for card in self.deck.sorted_by_distance(Blueprints.CORE):
             available_box += card.storage.to_flow()
         return available_box
 
@@ -27,13 +27,18 @@ class Game:
         self.turn += 1
 
         for priority in range(0, 10):
-            for card in self.deck.sorted_by_distance(Blueprints.ENEMY):
+            for card in self.deck.sorted_by_distance(Blueprints.CORE):
                 if card.priority != priority: continue
                 if self.get_available_box() < card.inflow: continue
-                self.collect_from_other_cards(card)
-                card.produce()
-                self.store_to_other_cards(card)
+                # card.produce()
+                if len(self.deck.in_range(card)) > 1:
+                    for target in self.deck.in_range(card):
+                        card.send_to(target)
+                else:
+                    self.collect_from_other_cards(card)
+                    card.produce()
+                    self.store_to_other_cards(card)
 
-        for card in self.deck.sorted_by_distance(Blueprints.ENEMY):
+        for card in self.deck.sorted_by_distance(Blueprints.CORE):
             self.store_to_other_cards(card)
             card.reset()

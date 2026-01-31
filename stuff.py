@@ -139,7 +139,10 @@ class Flow(Box):
         string: str = "( "
         for index, stuff in enumerate(self.stuff):
             if not stuff: continue
-            string += colored_string(Box.Types(index), f"{stuff:+} {Box.Types(index).name} ")
+            if stuff >= 0:
+                string += colored_string(Box.Types(index), f"{stuff:+} {Box.Types(index).name} ")
+            else:
+                string += Color.RED + f"{stuff:+} {Box.Types(index).name} " + Color.WHITE
         string += ")"
         return string
 
