@@ -212,14 +212,20 @@ class Card:
         self.destroyed = self.storage.stuff[Box.Types.HEALTH.value] <= 0
         return self.destroyed
 
-    def reset(self) -> None:
+    def reset_storage(self) -> None:
         self.charge = Box()
-        excess: Flow = self.get_excess()
+        excess: Flow = self.get_excess().without(Box.Types.SHIELD, Box.Types.BOOST)
         if excess == Flow(): return
         self.storage -= excess
         print(f"RESET: {self.name} -> {excess} -> Void")
         if self.is_destroyed():
             print(f"RESET: {self.name} destroyed!")
+
+    def reset_status_effects(self):
+        excess: Flow = self.get_excess().only(Box.Types.SHIELD, Box.Types.BOOST)
+        if excess == Flow(): return
+        self.storage -= excess
+        print(f"RESET: {self.name} -> {excess} -> Void")
 
     def get_excess(self):
         excess: Box = self.storage - self.stats().capacity.to_flow()

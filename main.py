@@ -23,8 +23,10 @@ def main():
     deck += Blueprints.ENEMY
     # deck[2].level_up()
     deck.sorted_by_distance(deck[1])
-    for i in range(1): game.calculate()
-    print(deck)
+    while True:
+        for i in range(1): game.calculate()
+        print(deck)
+        input("Press any key to continue...")
 
 
 def stuff_calc():

@@ -40,7 +40,7 @@ class Game:
         self.turn += 1
 
         for card in self.deck.sorted_by_distance():
-            card.reset()
+            card.reset_status_effects()
 
         for priority in range(0, 10):
             for card in self.deck.sorted_by_distance():
@@ -57,3 +57,6 @@ class Game:
             self.bonus_send_to_other_cards(card)
             card.bonus_produce()
             self.store_to_other_cards(card)
+
+        for card in self.deck.sorted_by_distance():
+            card.reset_storage()
