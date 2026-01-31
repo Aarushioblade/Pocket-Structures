@@ -1,4 +1,4 @@
-from structures import Deck
+from structures import Deck, Card
 from stuff import Box
 
 
@@ -13,6 +13,15 @@ class Game:
             available_box += card.storage.to_flow()
         return available_box
 
+    def store_to_other_cards(self, card: Card) -> None:
+        for other in self.deck:
+            if other == card: continue
+            card.store(other)
+
+    def collect_from_other_cards(self, card: Card) -> None:
+        for other in self.deck:
+            card.collect(other)
+
     def calculate(self) -> None:
         print(f"\n - Turn {self.turn} - \n")
         self.turn += 1
@@ -21,12 +30,10 @@ class Game:
             for card in self.deck:
                 if card.priority != priority: continue
                 if self.get_available_box() < card.inflow: continue
-                for other in self.deck:
-                    card.collect(other)
+                self.collect_from_other_cards(card)
                 card.produce()
-                for other in self.deck:
-                    if other == card: continue
-                    card.store(other)
+                self.store_to_other_cards(card)
 
         for card in self.deck:
+            self.store_to_other_cards(card)
             card.reset()

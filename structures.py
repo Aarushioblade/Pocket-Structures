@@ -10,6 +10,9 @@ class Deck:
         self.cards: list[Card] = []
         if cards is not None: self.cards = cards
 
+        self.next_card_number = 0
+        self.last_id = 0
+
     def __iadd__(self, other: Card) -> Deck:
         if not isinstance(other, Card): raise TypeError
         self.cards.append(copy.deepcopy(other))
@@ -45,6 +48,9 @@ class Deck:
         for card in self.cards:
             string += f"{card}\n"
         return string
+
+    def __repr__(self) -> str:
+        return f"{self.cards}"
 
     def __getitem__(self, index: int) -> Card | None:
         try:
@@ -86,8 +92,10 @@ class Deck:
     def __iter__(self) -> Deck:
         self.next_card_number = 0
         self.last_id = 0
-        return self
+        return copy.copy(self)
 
+    def __copy__(self) -> Deck:
+        return Deck(self.cards)
 
 class Card:
     ID: int = 0
@@ -185,9 +193,8 @@ class Card:
         print(f"COLLECT: {self.name} <- {transfer} <- {other.name}")
 
     def get_storage_transfer(self, other: Card) -> Flow | None:
-        excess: Box = self.storage - self.stats().capacity.to_flow()
         maximum_to_receive: Box = other.stats().capacity - other.storage.to_flow()
-        transfer: Flow = maximum_to_receive.to_flow().get_outflow() % excess.to_flow().get_outflow()
+        transfer: Flow = maximum_to_receive.to_flow().get_outflow() % self.get_excess()
         if transfer == Flow(): return None
         return transfer
 
