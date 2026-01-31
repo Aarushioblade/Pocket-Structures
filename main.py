@@ -9,9 +9,15 @@ def main():
     # deck += Blueprints.CORE
     deck += Blueprints.CORE
     # deck += Blueprints.SHIELD
-    # deck += Blueprints.GENERATOR
-    deck += Blueprints.HYPERBEAM
-    deck += Blueprints.ENEMY
+    for i in range(3):
+        deck += Blueprints.GENERATOR
+        deck.cards[-1].level_up()
+    deck += Blueprints.REGENERATOR
+    deck += Blueprints.BOOST
+    deck += Blueprints.FACTORY
+    deck += Blueprints.MINE
+    deck += Blueprints.BOOST
+    deck += Blueprints.SHIELD
     # deck += Blueprints.ENEMY
     # deck[2].level_up()
     deck.sorted_by_distance(deck[1])

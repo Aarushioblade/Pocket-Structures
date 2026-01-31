@@ -90,7 +90,8 @@ class Deck:
         for card in self.cards:
             if card.name == Blueprints.CORE.name:
                 return card
-        return None
+        print("Core not found")
+        return self.cards[0]
 
     def from_id(self, card_id: int) -> Card | None:
         for card in self.cards:
@@ -164,6 +165,7 @@ class Card:
             string += str(level)
         if SHOW_ALL:
             string += f"| Level: {self.level}\n"
+        string += f"| Charge: {self.charge}\n"
         string += f"| Priority: {self.priority}\n"
         string += f"| ID: {self.id:06}\n"
         return string
@@ -246,6 +248,27 @@ class Card:
         other.storage += flow
         print(f"SEND: {self.name} -> {flow} -> {other.name}")
 
+    def is_charged(self) -> bool:
+        return self.charge == self.inflow
+
+    def bonus_produce(self) -> None:
+        if not self.is_charged(): return
+        bonus_flow: Flow = self.outflow.without(Box.Types.BOOST).boosted(self.storage.stuff[Box.Types.BOOST.value])
+        if bonus_flow == Flow(): return
+        self.storage += bonus_flow
+        print(f"BONUS: {self.name} >> {bonus_flow}")
+
+    def bonus_send_to(self, other: Card) -> None:
+        if not self.is_charged(): return
+        flow = self.stats().effect_flow.without(Box.Types.BOOST).boosted(self.storage.stuff[Box.Types.BOOST.value])
+        if self.is_enemy == other.is_enemy:
+            flow = flow.get_outflow()
+        else:
+            flow = -flow.get_inflow()
+        if flow == Flow(): return
+        other.storage += flow
+        print(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
+
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: int = 0, unlocked: bool = False,
@@ -273,8 +296,8 @@ class Level:
 
 class Blueprints:
     CORE = Card("Core", Box(health=1000), [
-        Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=240, boost=100),
-              Flow(energy=600), price=0, unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
+        Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=0, boost=0),
+              Flow(energy=+6), price=0, unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
     ], priority=0, is_hidden=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100), Flow(energy=12), 60, True),
@@ -298,19 +321,19 @@ class Blueprints:
     # not required to work
     HYPERBEAM = Card("Hyperbeam", Box(health=120), [
         Level(1, Box(health=120), Flow(energy=-20), 200, True, 2, Flow(health=-20)),
-    ], 6)
+    ], 5)
     ENEMY = Card("Enemy", Box(health=60), [
-        Level(1, Box(health=60), Flow(), 80, True, 1, effect_flow=Flow(health=-15, energy=+5)),
+        Level(1, Box(health=60), Flow(), 80, True, 1, effect_flow=Flow(health=-15)),
     ], 9, is_enemy=True, is_hidden=True)
     BOOST = Card("Boost", Box(health=48), [
         Level(1, Box(health=48), Flow(energy=-20), 400, True, 1, Flow(boost=+50)),
-    ], 5)
+    ], 8)
     REGENERATOR = Card("Regenerator", Box(health=100), [
         Level(1, Box(health=100), Flow(energy=-5), 250, True, 3, Flow(health=+10)),
-    ], 7)
+    ], 6)
     SHIELD = Card("Shield", Box(health=64), [
         Level(1, Box(health=64), Flow(energy=-20), 500, True, 2, Flow(shield=+50)),
-    ], 8)
+    ], 7)
     # don't expect these to work
     DIMENSION = Card("Pocket Dimension", Box(health=0), [
         Level(1, Box(health=0), Flow(energy=-100), 900, True),

@@ -26,9 +26,16 @@ class Game:
         for target in self.deck.in_range(card):
             card.send_to(target)
 
+    def bonus_send_to_other_cards(self, card: Card) -> None:
+        for target in self.deck.in_range(card):
+            card.bonus_send_to(target)
+
     def calculate(self) -> None:
         print(f"\n - Turn {self.turn} - \n")
         self.turn += 1
+
+        for card in self.deck.sorted_by_distance():
+            card.reset()
 
         for priority in range(0, 10):
             for card in self.deck.sorted_by_distance():
@@ -40,7 +47,9 @@ class Game:
                 self.store_to_other_cards(card)
 
         for card in self.deck.sorted_by_distance():
+            self.bonus_send_to_other_cards(card)
+            card.bonus_produce()
             self.store_to_other_cards(card)
 
         for card in self.deck.sorted_by_distance():
-            card.reset()
+            print(f"{card.name} is charged? {card.is_charged()}")

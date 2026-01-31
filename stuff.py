@@ -203,7 +203,7 @@ class Flow(Box):
     def to_box(self) -> Box:
         return Box(packed=self.stuff)
 
-    def boosted(self, amount: float):
+    def boosted(self, amount: int):
         percentage: float = amount / 100.0
         modified = [floor(value * percentage) for value in self.stuff]
         return Flow(packed=modified)
