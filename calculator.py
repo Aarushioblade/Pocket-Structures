@@ -50,6 +50,3 @@ class Game:
             self.bonus_send_to_other_cards(card)
             card.bonus_produce()
             self.store_to_other_cards(card)
-
-        for card in self.deck.sorted_by_distance():
-            print(f"{card.name} is charged? {card.is_charged()}")

@@ -1,4 +1,5 @@
 import copy
+from asyncio import shield
 from enum import Enum
 from math import floor
 
@@ -146,6 +147,18 @@ class Box:
 
     def to_flow(self) -> Flow:
         return Flow(packed=self.stuff)
+
+    def absorb(self, flow: Flow) -> None:
+        shield_type = Box.Types.SHIELD.value
+        health_type = Box.Types.HEALTH.value
+        attack = abs(flow.stuff[health_type])
+        max_shield_change = min(self.stuff[shield_type], attack)
+        self.stuff[shield_type] -= max_shield_change
+        attack -= max_shield_change
+        self.stuff[health_type] -= attack
+        for i in range(len(self.stuff)):
+            if i in [health_type, shield_type]: continue
+            self.stuff[i] = min(self.stuff[i] - flow.stuff[i], 0)
 
 
 class Flow(Box):

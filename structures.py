@@ -242,10 +242,12 @@ class Card:
         flow = self.stats().effect_flow
         if self.is_enemy == other.is_enemy:
             flow = flow.get_outflow()
+            other.storage += flow
         else:
             flow = -flow.get_inflow()
+            other.storage.absorb(flow)
         if flow == Flow(): return
-        other.storage += flow
+
         print(f"SEND: {self.name} -> {flow} -> {other.name}")
 
     def is_charged(self) -> bool:
