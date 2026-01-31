@@ -11,7 +11,7 @@ def main():
     deck += Blueprints.ENEMY
     deck += Blueprints.GENERATOR
     deck += Blueprints.POWER_BOX
-    for card in deck:
+    for card in deck.sorted_by_distance(Blueprints.POWER_BOX):
         print(card)
     for i in range(6): game.calculate()
     print(deck)

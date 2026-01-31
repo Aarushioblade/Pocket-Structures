@@ -9,10 +9,6 @@ class Deck:
         self.cards: list[Card] = []
         if cards is not None: self.cards = cards
 
-        self.next_card_number: int = 0
-        self.passed_cards: list[Card] = []
-        self.center: Card | None = None
-
     def __iadd__(self, other: Card, is_above: bool = True) -> Deck:
         if not isinstance(other, Card): raise TypeError
         new_card = copy.deepcopy(other)
@@ -79,12 +75,6 @@ class Deck:
             pass
         return self
 
-    def in_passed_cards(self, other: Card) -> bool:
-        for passed in self.passed_cards:
-            if other == passed:
-                return True
-        return False
-
     def sorted_by_distance(self, card: Card) -> list[Card]:
         new_cards: list[Card] = []
         for _ in self.cards:
@@ -98,39 +88,6 @@ class Deck:
                     closest_distance = distance
             new_cards.append(closest_card)
         return new_cards
-
-
-    def __next__(self) -> Card:
-        if self.next_card_number >= len(self):
-            raise StopIteration
-
-        closest_distance = 999999999999
-        closest_card = self.center
-        for x in range(len(self.cards)):
-            if self.in_passed_cards(self.cards[x]):
-                continue
-            # print(card in self.passed_cards)
-            distance = abs(x - self.cards.index(self.center))
-            if distance < closest_distance:
-                closest_card = self.cards[x]
-                # print(closest_card.name)
-                closest_distance = distance
-
-        self.passed_cards.append(closest_card)
-        # print(self.passed_cards)
-        self.next_card_number += 1
-        if closest_distance == 2:
-            print(f"{closest_card.name} was the closest to {self.center.name} at distance {closest_distance}")
-        return closest_card
-
-    def __iter__(self, center: Card = None) -> Deck:
-        new_deck = copy.copy(self)
-        if not center:
-            center = self.cards[0]
-        new_deck.center = center
-        new_deck.next_card_number = 0
-        new_deck.passed_cards = []
-        return new_deck
 
     def __copy__(self) -> Deck:
         new_deck = Deck(self.cards)
