@@ -4,18 +4,22 @@ from stuff import Box, Flow
 
 SHOW_ALL: bool = False
 
-
 class Deck:
     def __init__(self, cards: list[Card] = None):
         self.cards: list[Card] = []
         if cards is not None: self.cards = cards
 
-        self.next_card_number = 0
-        self.last_id = 0
+        self.next_card_number: int = 0
+        self.passed_cards: list[Card] = []
+        self.center: Card | None = None
 
-    def __iadd__(self, other: Card) -> Deck:
+    def __iadd__(self, other: Card, is_above: bool = True) -> Deck:
         if not isinstance(other, Card): raise TypeError
-        self.cards.append(copy.deepcopy(other))
+        new_card = copy.deepcopy(other)
+        if is_above:
+            self.cards.append(new_card)
+        else:
+            self.cards.insert(0, new_card)
         return self
 
     def __isub__(self, other: Card) -> Deck:
@@ -75,27 +79,62 @@ class Deck:
             pass
         return self
 
+    def in_passed_cards(self, other: Card) -> bool:
+        for passed in self.passed_cards:
+            if other == passed:
+                return True
+        return False
+
+    def sorted_by_distance(self, card: Card) -> list[Card]:
+        new_cards: list[Card] = []
+        for _ in self.cards:
+            closest_distance = 999999999999
+            closest_card = card
+            for x in range(len(self.cards)):
+                if self.cards[x] in new_cards: continue
+                distance = abs(x - self.cards.index(card))
+                if distance < closest_distance:
+                    closest_card = self.cards[x]
+                    closest_distance = distance
+            new_cards.append(closest_card)
+        return new_cards
+
+
     def __next__(self) -> Card:
         if self.next_card_number >= len(self):
             raise StopIteration
-        closest_id: int = 0
-        next_card: Card = self.cards[0]
-        for card in self.cards:
-            if card.id <= self.last_id: continue
-            if card.id > closest_id != 0: continue
-            closest_id = card.id
-            next_card = card
-        self.next_card_number += 1
-        self.last_id = closest_id
-        return next_card
 
-    def __iter__(self) -> Deck:
-        self.next_card_number = 0
-        self.last_id = 0
-        return copy.copy(self)
+        closest_distance = 999999999999
+        closest_card = self.center
+        for x in range(len(self.cards)):
+            if self.in_passed_cards(self.cards[x]):
+                continue
+            # print(card in self.passed_cards)
+            distance = abs(x - self.cards.index(self.center))
+            if distance < closest_distance:
+                closest_card = self.cards[x]
+                # print(closest_card.name)
+                closest_distance = distance
+
+        self.passed_cards.append(closest_card)
+        # print(self.passed_cards)
+        self.next_card_number += 1
+        if closest_distance == 2:
+            print(f"{closest_card.name} was the closest to {self.center.name} at distance {closest_distance}")
+        return closest_card
+
+    def __iter__(self, center: Card = None) -> Deck:
+        new_deck = copy.copy(self)
+        if not center:
+            center = self.cards[0]
+        new_deck.center = center
+        new_deck.next_card_number = 0
+        new_deck.passed_cards = []
+        return new_deck
 
     def __copy__(self) -> Deck:
-        return Deck(self.cards)
+        new_deck = Deck(self.cards)
+        return new_deck
 
 class Card:
     ID: int = 0
@@ -171,6 +210,7 @@ class Card:
 
     def produce(self) -> None:
         self.storage += self.outflow
+        if self.outflow == Flow(): return
         print(f"PRODUCE: {self.name} >> {self.outflow}")
 
     def reset(self) -> None:
@@ -229,7 +269,8 @@ class Level:
 
 class Blueprints:
     CORE = Card("Core", Box(health=1000), [
-        Level(1, Box(health=1000, material=30, energy=60, starbit=15000), Flow(health=20, energy=6), 0, True)
+        Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=240, boost=100),
+              Flow(health=20, energy=6), 0, True)
     ], 0, hidden=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100), Flow(energy=12), 60, True),

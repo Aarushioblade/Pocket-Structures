@@ -6,19 +6,14 @@ from stuff import Box, Flow
 def main():
     deck = Deck()
     game = Game(deck)
-    deck += Blueprints.CORE
-    deck += Blueprints.GENERATOR
-    deck += Blueprints.MINE
-    deck += Blueprints.FACTORY
-    deck += Blueprints.GENERATOR
-    deck += Blueprints.GENERATOR
-    deck += Blueprints.SHIELD
+    # deck += Blueprints.CORE
+    deck += Blueprints.POWER_BOX
     deck += Blueprints.ENEMY
-    deck += Blueprints.BOOST
-    deck[2].level_up()
+    deck += Blueprints.GENERATOR
+    deck += Blueprints.POWER_BOX
     for card in deck:
         print(card)
-    for i in range(1): game.calculate()
+    for i in range(6): game.calculate()
     print(deck)
 
 

@@ -47,7 +47,7 @@ class Box:
         return f"Flow({self.stuff})"
 
     def __init__(self, health=0, material=0, energy=0, starbit=0, shield=0, boost=0, packed: list[int] = None):
-        self.stuff: list[int] = [0, 0, 0, 0, 0, 0]
+        self.stuff: list[int] = [0] * 6
         if packed:
             self.stuff = packed
             return
