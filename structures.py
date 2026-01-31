@@ -65,8 +65,8 @@ class Deck:
             return None
 
     def in_range(self, other: Card) -> Deck:
-        # if other.stats().range:
-        #    pass
+        if other.stats().range:
+            pass
         return self
 
     def __next__(self) -> Card:
@@ -105,6 +105,7 @@ class Card:
         self.inflow: Flow = Flow()
         self.outflow: Flow = Flow()
         self.update_flows()
+        self.charge: Box = Box()
         self.height: int = 12
         self.id: int = Card.ID
         Card.ID += 1
@@ -120,6 +121,7 @@ class Card:
         string += f"{self.name}\n"
         string += f"| Storage: {self.storage}\n"
         for index, level in enumerate(self.levels):
+            if not (index + 1 == self.level or SHOW_ALL): continue
             string += f"| Level {index + 1}\n"
             string += str(level)
         if SHOW_ALL:
@@ -148,6 +150,10 @@ class Card:
         other.append(self)
         return other
 
+    def level_up(self):
+        self.level += 1
+        self.update_flows()
+
     def stats(self) -> Level:
         return self.levels[self.level - 1]
 
@@ -157,9 +163,40 @@ class Card:
 
     def produce(self) -> None:
         self.storage += self.outflow
+        print(f"PRODUCE: {self.name} >> {self.outflow}")
+
+    def reset(self) -> None:
+        self.charge = Box()
+        excess: Flow = self.get_excess()
+        if excess == Flow(): return
+        self.storage -= excess
+        print(f"RESET: {self.name} -> {excess} -> Void")
+
+    def get_excess(self):
+        excess: Box = self.storage - self.stats().capacity.to_flow()
+        return excess.to_flow().get_outflow()
 
     def collect(self, other: Card) -> None:
-        return
+        required: Flow = self.inflow - self.charge
+        transfer: Flow = other.storage % required.to_flow()
+        if transfer == Flow(): return
+        other.storage -= transfer
+        self.charge += transfer
+        print(f"COLLECT: {self.name} <- {transfer} <- {other.name}")
+
+    def get_storage_transfer(self, other: Card) -> Flow | None:
+        excess: Box = self.storage - self.stats().capacity.to_flow()
+        maximum_to_receive: Box = other.stats().capacity - other.storage.to_flow()
+        transfer: Flow = maximum_to_receive.to_flow().get_outflow() % excess.to_flow().get_outflow()
+        if transfer == Flow(): return None
+        return transfer
+
+    def store(self, other: Card) -> None:
+        transfer: Flow = self.get_storage_transfer(other)
+        if transfer is None: return
+        self.storage -= transfer
+        other.storage += transfer
+        print(f"STORE: {self.name} -> {transfer} -> {other.name}")
 
 
 class Level:

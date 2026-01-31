@@ -89,29 +89,19 @@ class Box:
             new_stuff.append(self.stuff[i] - other.stuff[i])
         return Box(packed=new_stuff)
 
-    def __lt__(self, other: Flow) -> bool:
-        for i in range(len(self.stuff)):
-            if not (self.stuff[i] < other.stuff[i]):
-                return False
-        return True
-
-    def __gt__(self, other: Flow) -> bool:
-        for i in range(len(self.stuff)):
-            if not (self.stuff[i] > other.stuff[i]):
-                return False
-        return True
+    def __lt__(self, other) -> bool:
+        # print(f"My box is {self} and the inflow is {other.box}")
+        for box, inflow in zip(self.stuff, other.stuff):
+            if box < inflow:
+                # print(f"true because {box} < {inflow}")
+                return True
+        return False
 
     def __eq__(self, other) -> bool:
         for i in range(len(self.stuff)):
             if not (self.stuff[i] == other.stuff[i]):
                 return False
         return True
-
-    def __le__(self, other: Flow) -> bool:
-        return not self.__gt__(other)
-
-    def __ge__(self, other) -> bool:
-        return not self.__lt__(other)
 
     def __mod__(self, other: Flow) -> Flow:
         new_flow: list[int] = []
@@ -164,6 +154,17 @@ class Flow(Box):
         memo[id(self)] = new_flow
         return new_flow
 
+    def __sub__(self, other: Box) -> Flow:
+        new_stuff: list[int] = []
+        for i in range(len(self.stuff)):
+            new_stuff.append(self.stuff[i] - other.stuff[i])
+        return Flow(packed=new_stuff)
+
+    def __isub__(self, other: Box) -> Flow:
+        for i in range(len(self.stuff)):
+            self.stuff[i] -= other.stuff[i]
+        return self
+
     # return negative values from the original
     def get_inflow(self) -> Flow:
         values: list[int] = []
@@ -181,7 +182,7 @@ class Flow(Box):
             values.append(modified)
         return Flow(packed=values)
 
-    def to_stuff(self) -> Box:
+    def to_box(self) -> Box:
         return Box(packed=self.stuff)
 
     def boosted(self, amount: float):
