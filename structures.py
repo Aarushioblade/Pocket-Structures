@@ -201,7 +201,7 @@ class Card:
 
     def store(self, other: Card) -> None:
         if other.is_enemy: return
-        transfer: Flow = self.get_storage_transfer(other)
+        transfer: Flow = self.get_storage_transfer(other).without(Box.Types.SHIELD, Box.Types.BOOST)
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
@@ -211,11 +211,14 @@ class Card:
         flow = self.stats().effect_flow
         if not self.is_enemy:
             if other.is_enemy:
-                flow = flow.only(Box.Types.HEALTH).get_inflow()
+                flow = flow.get_inflow()
             else:
                 flow = flow.get_outflow()
-        elif other.is_enemy:
-            return
+        else:
+            if other.is_enemy:
+                flow = flow.get_outflow()
+            else:
+                flow = flow.get_inflow()
         if flow == Flow(): return
         other.storage += flow
         print(f"SEND: {self.name} -> {flow} -> {other.name}")
@@ -237,6 +240,7 @@ class Level:
         string: str = ""
         string += f"| | Capacity: {self.capacity}\n"
         string += f"| | Flow: {self.flow}\n"
+        string += f"| | Effect: {self.effect_flow}\n"
         if SHOW_ALL:
             string += f"| | Price: {self.price}\n"
             string += f"| | Range: {self.range}\n"

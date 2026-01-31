@@ -8,9 +8,9 @@ def main():
     game = Game(deck)
     # deck += Blueprints.CORE
     deck += Blueprints.CORE
-    deck += Blueprints.ENEMY
+    deck += Blueprints.SHIELD
     deck += Blueprints.GENERATOR
-    deck += Blueprints.POWER_BOX
+    deck[2].level_up()
     for card in deck.sorted_by_distance(Blueprints.CORE):
         print(card)
     for i in range(1): game.calculate()
