@@ -77,3 +77,26 @@ class Game:
             raise Exception(f"Can't buy {card.name} for {card.stats().price}")
         self.collect_purchase_from_other_cards(card)
         self.deck += card
+
+    def sell(self, index: int) -> None:
+        card = self.deck.cards[index]
+        sell_price: Box = card.purchased * 0.75
+        print(f"SELL: {card.name} >> {sell_price}")
+        card.storage += sell_price
+        self.store_to_other_cards(card)
+        del self.deck.cards[index]
+
+    def can_upgrade(self, index: int) -> bool:
+        card = self.deck.cards[index]
+        if card.level == len(card.levels): return False
+        return not self.get_available_box() < card.next_stats().price
+
+    def upgrade(self, index: int) -> None:
+        card = self.deck.cards[index]
+        if not self.can_upgrade(index):
+            raise Exception(f"Can't upgrade {card.name}!")
+        card_value = card.purchased.to_flow()
+        card.purchased = Box()
+        card.level_up()
+        self.collect_purchase_from_other_cards(card)
+        card.purchased += card_value

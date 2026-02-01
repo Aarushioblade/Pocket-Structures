@@ -8,6 +8,8 @@ def main():
     game = Game(deck)
     deck += Blueprints.CORE
     game.buy(Blueprints.GENERATOR)
+    game.upgrade(1)
+    game.sell(1)
     game.calculate()
     print(deck)
 

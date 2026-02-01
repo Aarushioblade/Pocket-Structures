@@ -184,6 +184,8 @@ class Card:
         new_storage: Box = copy.deepcopy(self.storage, memo)
         new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.is_hidden)
         memo[id(self)] = new_card = new_card
+        new_card.purchased = copy.deepcopy(self.purchased, memo)
+        new_card.charge = copy.deepcopy(self.charge, memo)
         return new_card
 
     def __add__(self, other: Card) -> list[Card]:
@@ -200,6 +202,9 @@ class Card:
 
     def stats(self) -> Level:
         return self.levels[self.level - 1]
+
+    def next_stats(self):
+        return self.levels[self.level]
 
     def update_flows(self) -> None:
         self.inflow: Flow = self.stats().flow.get_inflow()
