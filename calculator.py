@@ -1,6 +1,7 @@
 import copy
 
-from structures import Deck, Card
+from card import Card
+from deck import Deck
 from stuff import Box
 
 

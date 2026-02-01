@@ -4,129 +4,6 @@ from stuff import Box, Flow
 
 SHOW_ALL: bool = True
 
-class Deck:
-    def __init__(self, cards: list[Card] = None):
-        self.cards: list[Card] = []
-        if cards is not None: self.cards = cards
-
-    def __iadd__(self, other: Card, is_above: bool = True) -> Deck:
-        if not isinstance(other, Card): raise TypeError
-        new_card = copy.deepcopy(other)
-        if is_above:
-            self.cards.append(new_card)
-        else:
-            self.cards.insert(0, new_card)
-        return self
-
-    def __isub__(self, other: Card) -> Deck:
-        try:
-            self.cards.remove(other)
-        except ValueError:
-            pass
-        return self
-
-    def __truediv__(self, other: Card) -> Deck:
-        excluded_cards: list[Card] = [card for card in self.cards if card != other]
-        return Deck(excluded_cards)
-
-    def __mul__(self, other: Card | list[Card]) -> Deck:
-        if isinstance(other, list):
-            included_cards: list[Card] = [card for card in self.cards if card in other]
-        else:
-            included_cards: list[Card] = [card for card in self.cards if card == other]
-        return Deck(included_cards)
-
-    def __add__(self, other: Deck) -> Deck:
-        self.cards.extend(other.cards)
-        return self
-
-    def __len__(self) -> int:
-        return len(self.cards)
-
-    def __str__(self) -> str:
-        string: str = "\n"
-        for card in self.cards:
-            string += f"{card}\n"
-        return string
-
-    def __repr__(self) -> str:
-        return f"{self.cards}"
-
-    def __getitem__(self, index: int) -> Card | None:
-        try:
-            return self.cards[index]
-        except IndexError:
-            return None
-
-    def __setitem__(self, index: int, value: Card) -> None:
-        try:
-            self.cards[index] = value
-        except IndexError:
-            return None
-
-    def __delitem__(self, index: int) -> None:
-        try:
-            del self.cards[index]
-        except IndexError:
-            return None
-
-    def in_range(self, other: Card) -> list[Card]:
-        max_distance = other.stats().range
-        cards_in_range: list[Card] = []
-        sorted_deck = self.cards  # self.sorted_by_distance(other)
-        for x in range(len(sorted_deck)):
-            distance = abs(x - sorted_deck.index(other))
-            if distance <= max_distance:
-                cards_in_range.append(sorted_deck[x])
-        return cards_in_range
-
-    def find(self, card: Card) -> int | None:
-        for index, other in enumerate(self.cards):
-            if other.name == card.name:
-                return index
-        return None
-
-    def get_core(self) -> Card | None:
-        for card in self.cards:
-            if card.name == "Core":
-                return card
-        print("Core not found")
-        return self.cards[0]
-
-    def from_id(self, card_id: int) -> Card | None:
-        for card in self.cards:
-            if card.id == card_id:
-                return card
-        return None
-
-    def sorted_by_distance(self, card: Card | None = None) -> list[Card]:
-        new_cards: list[Card] = []
-        banned_id: list[int] = []
-        if card is None:
-            card = self.get_core()
-        start_index = self.cards.index(card)
-        for _ in self.cards:
-            new = None
-            local_closest_distance = -1
-            for index, test in enumerate(self.cards):
-                if test.id in banned_id:
-                    # print(f"{test.id} is banned")
-                    continue
-                distance = abs(index - start_index)
-                if local_closest_distance == -1 or distance <= local_closest_distance:
-                    local_closest_distance = distance
-                    new = test
-            if new is None:
-                raise ValueError
-            new_cards.append(new)
-            banned_id.append(new.id)
-
-        # print(f"Closest cards to {card.name}: \n{new_cards}")
-        return new_cards
-
-    def __copy__(self) -> Deck:
-        new_deck = Deck(self.cards)
-        return new_deck
 
 class Card:
     ID: int = 0
@@ -169,9 +46,14 @@ class Card:
             string += str(level)
         if SHOW_ALL:
             string += f"| Level: {self.level}\n"
+            string += f"| Purchased: {self.purchased}\n"
         string += f"| Charge: {self.charge}\n"
         string += f"| Priority: {self.priority}\n"
         string += f"| ID: {self.id:06}\n"
+        if self.is_enemy:
+            string += f"| ENEMY\n"
+        if self.destroyed:
+            string += "| DESTROYED\n"
         return string
 
     def __repr__(self) -> str:
@@ -179,6 +61,8 @@ class Card:
 
     def __copy__(self) -> Card:
         new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.is_hidden)
+        new_card.is_core = self.is_core
+        new_card.is_enemy = self.is_enemy
         return new_card
 
     def __deepcopy__(self, memo) -> Card:
@@ -187,6 +71,8 @@ class Card:
         memo[id(self)] = new_card = new_card
         new_card.purchased = copy.deepcopy(self.purchased, memo)
         new_card.charge = copy.deepcopy(self.charge, memo)
+        new_card.is_core = self.is_core
+        new_card.is_enemy = self.is_enemy
         return new_card
 
     def __add__(self, other: Card) -> list[Card]:
@@ -342,6 +228,8 @@ class Level:
         string += f"| | Effect: {self.effect_flow}\n"
         if SHOW_ALL:
             string += f"| | Price: {self.price}\n"
-            string += f"| | Range: {self.range}\n"
+            string += f"| | Researched: {self.researched}\n"
+            string += f"| | Research Cost: {self.research_cost}\n"
             string += f"| | Unlocked: {self.unlocked}\n"
+            string += f"| | Range: {self.range}\n"
         return string

@@ -1,4 +1,5 @@
-from structures import Card, Level, Box, Flow
+from card import Card, Level
+from stuff import Box, Flow
 
 
 class Blueprints:

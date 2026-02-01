@@ -1,4 +1,4 @@
-from structures import Deck
+from deck import Deck
 from calculator import Game
 from stuff import Box, Flow
 from blueprints import Blueprints
