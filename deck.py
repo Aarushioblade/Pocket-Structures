@@ -8,10 +8,10 @@ class Deck:
         self.cards: list[Card] = []
         if cards is not None: self.cards = cards
 
-    def __iadd__(self, other: Card, is_above: bool = True) -> Deck:
+    def add_card(self, other: Card, is_below: bool = True) -> Deck:
         if not isinstance(other, Card): raise TypeError
         new_card = copy.deepcopy(other)
-        if is_above:
+        if is_below:
             self.cards.append(new_card)
         else:
             self.cards.insert(0, new_card)

@@ -1,12 +1,14 @@
+from enum import Enum
+
 from card import Card, Level
 from stuff import Box, Flow
 
 
-class Blueprints:
+class Template(Enum):
     CORE = Card("Core", Box(health=1000, starbit=1000), [
         Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=200, boost=0),
               Flow(energy=+6), price=Box(), unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
-    ], priority=0, is_hidden=True, is_core=True)
+    ], priority=0, is_interactable=False, is_core=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100, shield=100), Flow(energy=12), Box(starbit=60), True),
         Level(2, Box(health=135), Flow(energy=36), Box(starbit=120), False),
@@ -32,7 +34,7 @@ class Blueprints:
     ], 5)
     ENEMY = Card("Enemy", Box(health=60), [
         Level(1, Box(health=60), Flow(), Box(), True, 1, effect_flow=Flow(health=-15)),
-    ], 9, is_enemy=True, is_hidden=True)
+    ], 9, is_enemy=True, is_interactable=False)
     BOOST = Card("Boost", Box(health=48), [
         Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), True, 1, Flow(boost=+50)),
     ], 8)
@@ -52,3 +54,11 @@ class Blueprints:
     DESTROYER = Card("Destroyer Base", Box(health=200), [
         Level(1, Box(health=200), Flow(health=-30, energy=-50), Box(starbit=1200), True),
     ], 6)
+
+
+if __name__ == '__main__':
+
+    for card in Template:
+        if not card.value.is_interactable:
+            print("NOT INTERACTABLE")
+        print(card.value)

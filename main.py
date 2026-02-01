@@ -1,23 +1,24 @@
 from deck import Deck
 from calculator import Game
 from stuff import Box, Flow
-from blueprints import Blueprints
+from template import Template
 
 
 def main():
+    print()
     deck = Deck()
     game = Game(deck)
-    deck += Blueprints.CORE
-    game.buy(Blueprints.GENERATOR)
-    game.research(Blueprints.GENERATOR)
+    deck.add_card(Template.CORE.value)
+    game.buy(Template.GENERATOR.value)
+    game.research(Template.GENERATOR.value)
     game.upgrade(1)
-    game.research(Blueprints.GENERATOR)
+    game.research(Template.GENERATOR.value)
     game.upgrade(1)
-    game.research(Blueprints.GENERATOR)
-    game.buy(Blueprints.FACTORY)
-    game.buy(Blueprints.MINE)
+    game.research(Template.GENERATOR.value)
+    game.buy(Template.FACTORY.value)
+    game.buy(Template.MINE.value)
     game.swap(2, 3)
-    game.research(Blueprints.MINE)
+    game.research(Template.MINE.value)
     game.upgrade(2)
     game.calculate()
     game.sell(3)
@@ -37,8 +38,7 @@ def stuff_calc():
     print(f"")
 
 
-
-# deck*Blueprints.BOOST + deck*Blueprints.CORE == deck*(Blueprints.BOOST + Blueprints.CORE)
+# deck*Template.BOOST + deck*Template.CORE == deck*(Template.BOOST + Template.CORE)
 
 if __name__ == '__main__':
     main()

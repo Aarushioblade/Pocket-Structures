@@ -9,12 +9,12 @@ class Card:
     ID: int = 0
 
     def __init__(self, name: str, storage: Box, levels: list[Level], priority: int, is_enemy: bool = False,
-                 is_hidden: bool = False, is_core: bool = False):
+                 is_interactable: bool = True, is_core: bool = False):
         self.name: str = name
         self.storage: Box = storage
         self.levels: list[Level] = levels
         self.priority: int = priority
-        self.is_hidden: bool = is_hidden
+        self.is_interactable: bool = is_interactable
         self.is_enemy: bool = is_enemy
         self.is_core: bool = is_core
 
@@ -60,19 +60,17 @@ class Card:
         return f"{self.name} ({self.id})"
 
     def __copy__(self) -> Card:
-        new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.is_hidden)
-        new_card.is_core = self.is_core
-        new_card.is_enemy = self.is_enemy
+        new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.is_interactable,
+                              self.is_core)
         return new_card
 
     def __deepcopy__(self, memo) -> Card:
         new_storage: Box = copy.deepcopy(self.storage, memo)
-        new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.is_hidden)
+        new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.is_interactable,
+                              self.is_core)
         memo[id(self)] = new_card = new_card
         new_card.purchased = copy.deepcopy(self.purchased, memo)
         new_card.charge = copy.deepcopy(self.charge, memo)
-        new_card.is_core = self.is_core
-        new_card.is_enemy = self.is_enemy
         return new_card
 
     def __add__(self, other: Card) -> list[Card]:
