@@ -256,7 +256,18 @@ class Card:
         if transfer == Flow(): return
         other.storage -= transfer
         self.purchased += transfer
-        print(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
+        if self.level == 1:
+            print(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
+        else:
+            print(f"UPGRADE: {self.name} <- {transfer} <- {other.name}")
+
+    def collect_research(self, other):
+        required: Flow = self.stats().research_cost.to_flow() - self.stats().researched
+        transfer: Flow = other.storage % required.to_flow()
+        if transfer == Flow(): return
+        other.storage -= transfer
+        self.stats().researched += transfer
+        print(f"RESEARCH: {self.name} <- {transfer} <- {other.name}")
 
     def get_storage_transfer(self, other: Card) -> Flow:
         maximum_to_receive: Box = other.stats().capacity - other.storage.to_flow()
@@ -309,7 +320,7 @@ class Card:
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,
-                 effect_range: int = 0, effect_flow: Flow = None):
+                 effect_range: int = 0, effect_flow: Flow = None, research_cost: Box = None):
         self.level = level
         self.price: Box = price
         self.capacity: Box = capacity
@@ -318,6 +329,10 @@ class Level:
         self.effect_flow = effect_flow
         self.range: int = effect_range
         self.unlocked: bool = unlocked
+        if not research_cost:
+            research_cost: Box = Box(starbit=10)
+        self.research_cost: Box = research_cost
+        self.researched: Box = Box()
 
     def __str__(self) -> str:
         string: str = ""
@@ -339,7 +354,7 @@ class Blueprints:
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100, shield=100), Flow(energy=12), Box(starbit=60), True),
         Level(2, Box(health=135), Flow(energy=36), Box(starbit=120), False),
-        Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False),
+        Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False, research_cost=Box(starbit=900)),
     ], 1)
     MINE = Card("Laser", Box(health=100), [
         Level(1, Box(health=100), Flow(material=+6, energy=-8), Box(starbit=80), True),

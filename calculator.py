@@ -1,3 +1,5 @@
+import copy
+
 from structures import Deck, Card
 from stuff import Box
 
@@ -32,6 +34,11 @@ class Game:
         for other in self.deck.sorted_by_distance():
             if other.is_destroyed(): continue
             card.collect_purchase(other)
+
+    def collect_research_from_other_cards(self, card: Card) -> None:
+        for other in self.deck.sorted_by_distance():
+            if other.is_destroyed(): continue
+            card.collect_research(other)
 
     def send_to_other_cards(self, card: Card) -> None:
         for target in self.deck.in_range(card):
@@ -88,7 +95,12 @@ class Game:
 
     def can_upgrade(self, index: int) -> bool:
         card = self.deck.cards[index]
-        if card.level == len(card.levels): return False
+        if card.level == len(card.levels):
+            print(f"UPGRADE: {card.name} is at its max level")
+            return False
+        if not card.next_stats().unlocked:
+            print(f"UPGRADE: {card.name} has not unlocked level {card.level + 1}")
+            return False
         return not self.get_available_box() < card.next_stats().price
 
     def upgrade(self, index: int) -> None:
@@ -100,3 +112,17 @@ class Game:
         card.level_up()
         self.collect_purchase_from_other_cards(card)
         card.purchased += card_value
+
+    def research(self, card: Card) -> None:
+        for level in card.levels:
+            if not level.unlocked:
+                if self.get_available_box() < level.research_cost:
+                    print(f"RESEARCH: Not enough resources to research {card.name} level {level.level}")
+                    return
+                levelled_card = copy.deepcopy(card)
+                levelled_card.level = level.level
+                self.collect_research_from_other_cards(levelled_card)
+                level.unlocked = True
+                print(f"RESEARCH: Unlocked level {level.level} for {card.name}")
+                return
+        print(f"RESEARCH: {card.name} has been fully researched")
