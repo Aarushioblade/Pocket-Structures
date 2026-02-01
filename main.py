@@ -1,6 +1,7 @@
-from structures import Deck, Blueprints
+from structures import Deck
 from calculator import Game
 from stuff import Box, Flow
+from blueprints import Blueprints
 
 
 def main():
@@ -10,9 +11,12 @@ def main():
     game.buy(Blueprints.GENERATOR)
     game.research(Blueprints.GENERATOR)
     game.upgrade(1)
-    game.swap(0, 1)
     game.research(Blueprints.GENERATOR)
+    game.upgrade(1)
     game.research(Blueprints.GENERATOR)
+    game.buy(Blueprints.FACTORY)
+    game.buy(Blueprints.MINE)
+    game.swap(2, 3)
     game.calculate()
     print(deck)
 

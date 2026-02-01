@@ -55,7 +55,7 @@ class Game:
         self.turn += 1
 
         for card in self.deck.sorted_by_distance():
-            card.reset_status_effects()
+            card.reset_status()
 
         for priority in range(0, 10):
             for card in self.deck.sorted_by_distance():
