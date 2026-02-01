@@ -16,7 +16,6 @@ class Game:
         if deck is None: deck = Deck()
         self.deck: Deck = deck
         self.turn = 1
-        self.select_index: int = 1
         self.card_index: int = 0
 
     def get_available_box(self) -> Box:
@@ -100,10 +99,9 @@ class Game:
         print(f"SELL: {card.name} >> {sell_price}")
         card.storage += sell_price
         self.store_to_other_cards(card)
-        for other in self.deck.sorted_by_distance(card):
-            if not other == card:
-                self.select_index = self.deck.cards.index(other)
         del self.deck.cards[index]
+        if not self.card_index in range(len(self.deck.cards)):
+            self.card_index = self.deck.cards.index(self.deck.get_core())
 
     def can_upgrade(self, index: int) -> bool:
         card = self.deck.cards[index]
@@ -150,23 +148,7 @@ class Game:
         if self.card_index not in range(len(self.deck.cards)):
             print(f"FOCUS: {self.card_index} is invalid")
             self.card_index -= amount
-        print(f"FOCUS: {self.card_index}")
-
-    def change_select_index(self, amount: int) -> None:
-        original_index = self.select_index
-        while True:
-            self.select_index += amount
-            if self.select_index not in range(len(Template)):
-                print(f"SELECT: {self.select_index} is out of bounds")
-                self.select_index = original_index
-                break
-            if list(Template)[self.select_index].value.is_interactable:
-                break
-            print(f"SELECT: {self.select_index} ({list(Template)[self.select_index].value.name}) is not interactable")
-        print(f"SELECT: {self.select_index} ({list(Template)[self.select_index].value.name})")
-
-    def selected_card(self) -> Card:
-        return copy.deepcopy(list(Template)[self.select_index].value)
+        print(f"FOCUS: {self.card_index} ({self.deck.cards[self.card_index].name})")
 
     def set_build_direction(self, direction: bool) -> None:
         self.build_direction = direction
@@ -179,3 +161,15 @@ class Shop:
         for card in Template:
             if not card.value.is_interactable: continue
             self.inventory.append(card.value)
+        self.shop_index: int = 0
+
+    def change_shop_index(self, index: int) -> None:
+        self.shop_index += index
+        if self.shop_index not in range(len(self.inventory)):
+            print(f"SHOP: {self.shop_index} is invalid")
+            self.shop_index -= index
+        print(
+            f"SHOP: Selecting {self.inventory[self.shop_index].name} (Price: {self.inventory[self.shop_index].stats().price}")
+
+    def selected_card(self) -> Card:
+        return copy.deepcopy(self.inventory[self.shop_index])

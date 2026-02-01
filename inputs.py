@@ -1,7 +1,7 @@
 from enum import Enum
 
 from pynput import keyboard as kb
-from calculator import Game
+from calculator import Game, Shop
 from template import Template
 
 
@@ -20,13 +20,14 @@ class Menu(Enum):
 menu: Menu = Menu.HOME
 game = Game()
 game.deck.add_card(Template.CORE.value)
+shop = Shop()
 
 
 def move(direction: int):
     if menu in [Menu.HOME, Menu.SELL]:
         game.change_card_index(direction)
     elif menu in [Menu.SHOP, Menu.RESEARCH]:
-        game.change_select_index(direction)
+        shop.change_shop_index(direction)
     input_complete()
 
 
@@ -41,20 +42,23 @@ def space():
     if menu == Menu.HOME: return
     match menu:
         case Menu.SHOP:
-            if game.can_buy(game.selected_card().stats().price):
+            if game.can_buy(shop.selected_card().stats().price):
                 menu = Menu.SHOP_CONFIRM
+                print(f"CONFIRM: You are buying {shop.selected_card().name}")
             else:
-                print(f"SHOP: Cannot buy {game.selected_card().name}")
+                print(f"SHOP: Cannot buy {shop.selected_card().name}")
         case Menu.SHOP_CONFIRM:
-            game.buy(game.selected_card())
+            game.buy(shop.selected_card())
             menu = Menu.HOME
         case Menu.SELL:
-            if game.deck.cards[game.card_index].is_interactable:
+            card = game.deck.cards[game.card_index]
+            if card.is_interactable:
                 menu = Menu.SELL_CONFIRM
+                print(f"CONFIRM: You are selling {card.name}")
             else:
-                print(f"SELL: Cannot sell {game.deck.cards[game.card_index].name}")
+                print(f"SELL: Cannot sell {card.name}")
         case Menu.SELL_CONFIRM:
-            game.sell(game.select_index)
+            game.sell(game.card_index)
             menu = Menu.HOME
         case Menu.RESEARCH:
             menu = Menu.RESEARCH_CONFIRM
