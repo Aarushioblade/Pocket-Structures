@@ -11,7 +11,7 @@ class Blueprints:
         Level(2, Box(health=135), Flow(energy=36), Box(starbit=120), False),
         Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False),
     ], 1)
-    MINE = Card("Laser", Box(health=100), [
+    MINE = Card("Laser Mine", Box(health=100), [
         Level(1, Box(health=100), Flow(material=+6, energy=-8), Box(starbit=80), True),
         Level(2, Box(health=120), Flow(material=+18, energy=-14), Box(starbit=160), False),
         Level(3, Box(health=140), Flow(material=+64, energy=-32), Box(starbit=340), False),
@@ -33,10 +33,10 @@ class Blueprints:
         Level(1, Box(health=60), Flow(), Box(), True, 1, effect_flow=Flow(health=-15)),
     ], 9, is_enemy=True, is_hidden=True)
     BOOST = Card("Boost", Box(health=48), [
-        Level(1, Box(health=48), Flow(energy=-20), Box(starbit=400), True, 1, Flow(boost=+50)),
+        Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), True, 1, Flow(boost=+50)),
     ], 8)
     REGENERATOR = Card("Regenerator", Box(health=100), [
-        Level(1, Box(health=100), Flow(energy=-5), Box(starbit=250), True, 3, Flow(health=+10)),
+        Level(1, Box(health=100), Flow(energy=-2, material=-8), Box(starbit=250), True, 3, Flow(health=+10)),
     ], 6)
     SHIELD = Card("Shield", Box(health=64), [
         Level(1, Box(health=64, shield=150), Flow(energy=-20), Box(starbit=500), True, 2, Flow(shield=+50)),

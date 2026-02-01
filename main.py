@@ -17,7 +17,12 @@ def main():
     game.buy(Blueprints.FACTORY)
     game.buy(Blueprints.MINE)
     game.swap(2, 3)
+    game.research(Blueprints.MINE)
+    game.upgrade(2)
     game.calculate()
+    game.sell(3)
+    game.sell(2)
+    game.sell(1)
     print(deck)
 
 
