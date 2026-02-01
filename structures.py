@@ -223,7 +223,9 @@ class Card:
             print(f"RESET: {self.name} destroyed!")
 
     def reset_status_effects(self):
-        excess: Flow = self.get_excess().only(Box.Types.SHIELD, Box.Types.BOOST)
+        excess: Flow = self.get_excess().only(Box.Types.SHIELD)
+        excess = excess % Flow(shield=20)
+        excess += self.get_excess().only(Box.Types.BOOST)
         if excess == Flow(): return
         self.storage -= excess
         print(f"RESET: {self.name} -> {excess} -> Void")

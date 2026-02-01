@@ -6,8 +6,9 @@ from stuff import Box, Flow
 def main():
     deck = Deck()
     game = Game(deck)
-    # deck += Blueprints.CORE
     deck += Blueprints.CORE
+    for i in range(2): deck += Blueprints.GENERATOR
+    deck += Blueprints.SHIELD
     deck.sorted_by_distance(deck[1])
     while True:
         for i in range(1): game.calculate()
