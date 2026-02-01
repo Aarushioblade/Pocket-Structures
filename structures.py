@@ -2,7 +2,7 @@ import copy
 
 from stuff import Box, Flow
 
-SHOW_ALL: bool = False
+SHOW_ALL: bool = True
 
 class Deck:
     def __init__(self, cards: list[Card] = None):
@@ -145,6 +145,7 @@ class Card:
         self.outflow: Flow = Flow()
         self.update_flows()
         self.charge: Box = Box()
+        self.purchased: Box = Box()
         self.height: int = 12
         self.is_shielded = False
         self.destroyed: bool = False
@@ -218,8 +219,7 @@ class Card:
         self.charge = Box()
         excess: Flow = self.get_excess().without(Box.Types.BOOST)
         if not self.is_shielded:
-            print(f"RESET: {self.name} is not shielded!")
-            excess += self.storage.only(Box.Types.SHIELD) % Flow(shield=36)
+            excess += self.storage.only(Box.Types.SHIELD) % Flow(shield=50)
         if excess == Flow(): return
         self.storage -= excess
         print(f"RESET: {self.name} -> {excess} -> Void")
@@ -244,6 +244,14 @@ class Card:
         other.storage -= transfer
         self.charge += transfer
         print(f"COLLECT: {self.name} <- {transfer} <- {other.name}")
+
+    def collect_purchase(self, other: Card) -> None:
+        required: Flow = self.stats().price.to_flow() - self.purchased
+        transfer: Flow = other.storage % required.to_flow()
+        if transfer == Flow(): return
+        other.storage -= transfer
+        self.purchased += transfer
+        print(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
 
     def get_storage_transfer(self, other: Card) -> Flow:
         maximum_to_receive: Box = other.stats().capacity - other.storage.to_flow()
@@ -295,10 +303,10 @@ class Card:
 
 
 class Level:
-    def __init__(self, level: int, capacity: Box, flow: Flow, price: int = 0, unlocked: bool = False,
+    def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,
                  effect_range: int = 0, effect_flow: Flow = None):
         self.level = level
-        self.price: int = price
+        self.price: Box = price
         self.capacity: Box = capacity
         self.flow: Flow = flow
         if not effect_flow: effect_flow = Flow()
@@ -319,52 +327,52 @@ class Level:
 
 
 class Blueprints:
-    CORE = Card("Core", Box(health=1000), [
+    CORE = Card("Core", Box(health=1000, starbit=1000), [
         Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=200, boost=0),
-              Flow(energy=+6), price=0, unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
+              Flow(energy=+6), price=Box(), unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
     ], priority=0, is_hidden=True)
     GENERATOR = Card("Generator", Box(health=100), [
-        Level(1, Box(health=100, shield=100), Flow(energy=12), 60, True),
-        Level(2, Box(health=135), Flow(energy=36), 120, False),
-        Level(3, Box(health=180), Flow(energy=72), 180, False),
+        Level(1, Box(health=100, shield=100), Flow(energy=12), Box(starbit=60), True),
+        Level(2, Box(health=135), Flow(energy=36), Box(starbit=120), False),
+        Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False),
     ], 1)
     MINE = Card("Laser", Box(health=100), [
-        Level(1, Box(health=100), Flow(material=+6, energy=-8), 80, True),
-        Level(2, Box(health=120), Flow(material=+18, energy=-14), 160, False),
-        Level(3, Box(health=140), Flow(material=+64, energy=-32), 340, False),
+        Level(1, Box(health=100), Flow(material=+6, energy=-8), Box(starbit=80), True),
+        Level(2, Box(health=120), Flow(material=+18, energy=-14), Box(starbit=160), False),
+        Level(3, Box(health=140), Flow(material=+64, energy=-32), Box(starbit=340), False),
     ], 2)
     FACTORY = Card("Factory", Box(health=100), [
-        Level(1, Box(health=100), Flow(material=-6, energy=-3, starbit=+24), 100, True),
+        Level(1, Box(health=100), Flow(material=-6, energy=-3, starbit=+24), Box(starbit=100), True),
     ], 3)
     STORAGE = Card("Storage", Box(health=120), [
-        Level(1, Box(health=120, material=60), Flow(), 150, True),
+        Level(1, Box(health=120, material=60), Flow(), Box(starbit=150), True),
     ], 4)
     POWER_BOX = Card("Power Box", Box(health=120), [
-        Level(1, Box(health=120, energy=80), Flow(), 150, True),
+        Level(1, Box(health=120, energy=80), Flow(), Box(starbit=150), True),
     ], 4)
     # not required to work
     HYPERBEAM = Card("Hyperbeam", Box(health=120), [
-        Level(1, Box(health=120), Flow(energy=-20), 200, True, 2, Flow(health=-20)),
+        Level(1, Box(health=120), Flow(energy=-20), Box(starbit=200), True, 2, Flow(health=-20)),
     ], 5)
     ENEMY = Card("Enemy", Box(health=60), [
-        Level(1, Box(health=60), Flow(), 80, True, 1, effect_flow=Flow(health=-15)),
+        Level(1, Box(health=60), Flow(), Box(), True, 1, effect_flow=Flow(health=-15)),
     ], 9, is_enemy=True, is_hidden=True)
     BOOST = Card("Boost", Box(health=48), [
-        Level(1, Box(health=48), Flow(energy=-20), 400, True, 1, Flow(boost=+50)),
+        Level(1, Box(health=48), Flow(energy=-20), Box(starbit=400), True, 1, Flow(boost=+50)),
     ], 8)
     REGENERATOR = Card("Regenerator", Box(health=100), [
-        Level(1, Box(health=100), Flow(energy=-5), 250, True, 3, Flow(health=+10)),
+        Level(1, Box(health=100), Flow(energy=-5), Box(starbit=250), True, 3, Flow(health=+10)),
     ], 6)
     SHIELD = Card("Shield", Box(health=64), [
-        Level(1, Box(health=64, shield=150), Flow(energy=-20), 500, True, 2, Flow(shield=+50)),
+        Level(1, Box(health=64, shield=150), Flow(energy=-20), Box(starbit=500), True, 2, Flow(shield=+50)),
     ], 7)
     # don't expect these to work
     DIMENSION = Card("Pocket Dimension", Box(health=0), [
-        Level(1, Box(health=0), Flow(energy=-100), 900, True),
+        Level(1, Box(health=0), Flow(energy=-100), Box(starbit=900), True),
     ], 8)
     PARALLEL = Card("Parallel Stacker", Box(health=0), [
-        Level(1, Box(health=0), Flow(energy=-110), 1000, True),
+        Level(1, Box(health=0), Flow(energy=-110), Box(starbit=1000), True),
     ], 8)
     DESTROYER = Card("Destroyer Base", Box(health=200), [
-        Level(1, Box(health=200), Flow(health=-30, energy=-50), 1200, True),
+        Level(1, Box(health=200), Flow(health=-30, energy=-50), Box(starbit=1200), True),
     ], 6)

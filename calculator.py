@@ -1,6 +1,9 @@
-from structures import Deck, Card, Blueprints
+from structures import Deck, Card
 from stuff import Box
 
+
+# これは何？日本語を書けますよ
+# 英語を書けない？なんで？
 
 class Game:
     def __init__(self, deck: Deck):
@@ -24,6 +27,11 @@ class Game:
         for other in self.deck.sorted_by_distance(card):
             if other.is_destroyed(): continue
             card.collect(other)
+
+    def collect_purchase_from_other_cards(self, card: Card) -> None:
+        for other in self.deck.sorted_by_distance():
+            if other.is_destroyed(): continue
+            card.collect_purchase(other)
 
     def send_to_other_cards(self, card: Card) -> None:
         for target in self.deck.in_range(card):
@@ -60,3 +68,12 @@ class Game:
 
         for card in self.deck.sorted_by_distance():
             card.reset_storage()
+
+    def can_buy(self, price: Box) -> bool:
+        return not self.get_available_box() < price
+
+    def buy(self, card: Card) -> None:
+        if not self.can_buy(card.stats().price):
+            raise Exception(f"Can't buy {card.name} for {card.stats().price}")
+        self.collect_purchase_from_other_cards(card)
+        self.deck += card

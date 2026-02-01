@@ -7,17 +7,9 @@ def main():
     deck = Deck()
     game = Game(deck)
     deck += Blueprints.CORE
-    for i in range(2): deck += Blueprints.GENERATOR
-    deck += Blueprints.SHIELD
-    deck.sorted_by_distance(deck[1])
+    game.buy(Blueprints.GENERATOR)
     game.calculate()
     print(deck)
-    del deck[3]
-
-    while True:
-        game.calculate()
-        print(deck)
-        input("Press any key to continue...")
 
 
 def stuff_calc():
