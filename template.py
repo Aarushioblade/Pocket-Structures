@@ -11,8 +11,8 @@ class Template(Enum):
     ], priority=0, is_interactable=False, is_core=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100, shield=100), Flow(energy=12), Box(starbit=60), True),
-        Level(2, Box(health=135), Flow(energy=36), Box(starbit=120), False),
-        Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False),
+        Level(2, Box(health=135), Flow(energy=36), Box(starbit=120), False, research_cost=Box(starbit=250)),
+        Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False, research_cost=Box(starbit=500)),
     ], 1)
     MINE = Card("Laser Mine", Box(health=100), [
         Level(1, Box(health=100), Flow(material=+6, energy=-8), Box(starbit=80), True),
@@ -36,23 +36,23 @@ class Template(Enum):
         Level(1, Box(health=60), Flow(), Box(), True, 1, effect_flow=Flow(health=-15)),
     ], 9, is_enemy=True, is_interactable=False)
     BOOST = Card("Boost", Box(health=48), [
-        Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), True, 1, Flow(boost=+50)),
+        Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), False, 1, Flow(boost=+50)),
     ], 8)
     REGENERATOR = Card("Regenerator", Box(health=100), [
         Level(1, Box(health=100), Flow(energy=-2, material=-8), Box(starbit=250), True, 3, Flow(health=+10)),
     ], 6)
     SHIELD = Card("Shield", Box(health=64), [
-        Level(1, Box(health=64, shield=150), Flow(energy=-20), Box(starbit=500), True, 2, Flow(shield=+50)),
+        Level(1, Box(health=64, shield=150), Flow(energy=-20), Box(starbit=500), False, 2, Flow(shield=+50)),
     ], 7)
     # don't expect these to work
     DIMENSION = Card("Pocket Dimension", Box(health=0), [
-        Level(1, Box(health=0), Flow(energy=-100), Box(starbit=900), True),
+        Level(1, Box(health=0), Flow(energy=-100), Box(starbit=900), False, research_cost=Box(starbit=1400)),
     ], 8)
     PARALLEL = Card("Parallel Stacker", Box(health=0), [
-        Level(1, Box(health=0), Flow(energy=-110), Box(starbit=1000), True),
+        Level(1, Box(health=0), Flow(energy=-110), Box(starbit=1000), False),
     ], 8)
     DESTROYER = Card("Destroyer Base", Box(health=200), [
-        Level(1, Box(health=200), Flow(health=-30, energy=-50), Box(starbit=1200), True),
+        Level(1, Box(health=200), Flow(health=-30, energy=-50), Box(starbit=1200), False),
     ], 6)
 
 

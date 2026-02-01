@@ -21,18 +21,22 @@ menu: Menu = Menu.HOME
 game = Game()
 game.deck.add_card(Template.CORE.value)
 shop = Shop()
+research = Shop()
+research.update_research()
 
 
 def move(direction: int):
     if menu in [Menu.HOME, Menu.SELL]:
         game.change_card_index(direction)
-    elif menu in [Menu.SHOP, Menu.RESEARCH]:
+    elif menu is Menu.SHOP:
         shop.change_shop_index(direction)
+    elif menu is Menu.RESEARCH:
+        research.change_shop_index(direction)
     input_complete()
 
 
 def switch(direction: bool):
-    if menu not in [Menu.SHOP, Menu.RESEARCH]: return
+    if menu is not Menu.SHOP: return
     game.set_build_direction(direction)
     input_complete()
 
@@ -61,12 +65,24 @@ def space():
             game.sell(game.card_index)
             menu = Menu.HOME
         case Menu.RESEARCH:
-            menu = Menu.RESEARCH_CONFIRM
+            card = research.selected_card()
+            if game.can_research(card):
+                menu = Menu.RESEARCH_CONFIRM
+                print(f"RESEARCH: You are researching level {card.stats().level} for {card.name}")
+            else:
+                print(f"RESEARCH: Cannot research {card.name}")
         case Menu.RESEARCH_CONFIRM:
+            game.research(research.selected_card())
+            research.update_research()
+            shop.update_shop()
             menu = Menu.HOME
         case Menu.UPGRADE:
-            menu = Menu.UPGRADE_CONFIRM
+            card = game.deck.cards[game.card_index]
+            if game.can_upgrade(game.card_index):
+                menu = Menu.UPGRADE_CONFIRM
+                print(f"UPGRADE: You are upgrading {card.name} to level {card.next_stats().level}")
         case Menu.UPGRADE_CONFIRM:
+            game.upgrade(game.card_index)
             menu = Menu.HOME
     input_complete()
 
@@ -119,13 +135,12 @@ def on_press(key):
             case 0:
                 pass
             case 1:
-                for card in Template:
-                    if card.value.is_interactable:
-                        print(f"{card.value}")
+                print(shop.inventory)
                 menu = Menu.SHOP
             case 2:
                 menu = Menu.SELL
             case 3:
+                print(research.inventory)
                 menu = Menu.RESEARCH
             case 4:
                 menu = Menu.UPGRADE

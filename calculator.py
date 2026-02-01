@@ -106,12 +106,15 @@ class Game:
     def can_upgrade(self, index: int) -> bool:
         card = self.deck.cards[index]
         if card.level == len(card.levels):
-            print(f"UPGRADE: {card.name} is at its max level")
+            print(f"UPGRADE: {card.name} cannot be upgraded any further")
             return False
         if not card.next_stats().unlocked:
             print(f"UPGRADE: {card.name} has not unlocked level {card.level + 1}")
             return False
-        return not self.get_available_box() < card.next_stats().price
+        if self.get_available_box() < card.next_stats().price:
+            print(f"UPGRADE: {card.name} does not have enough resources to upgrade")
+            return False
+        return True
 
     def upgrade(self, index: int) -> None:
         card = self.deck.cards[index]
@@ -123,19 +126,16 @@ class Game:
         self.collect_purchase_from_other_cards(card)
         card.purchased += card_value
 
+    def can_research(self, card: Card) -> bool:
+        return not self.get_available_box() < card.stats().research_cost
+
     def research(self, card: Card) -> None:
-        for level in card.levels:
-            if not level.unlocked:
-                if self.get_available_box() < level.research_cost:
-                    print(f"RESEARCH: Not enough resources to research {card.name} level {level.level}")
-                    return
-                levelled_card = copy.deepcopy(card)
-                levelled_card.level = level.level
-                self.collect_research_from_other_cards(levelled_card)
-                level.unlocked = True
-                print(f"RESEARCH: Unlocked level {level.level} for {card.name}")
-                return
-        print(f"RESEARCH: {card.name} has been fully researched")
+        if not self.can_research(card):
+            raise Exception(f"Can't research {card.name}!")
+        levelled_card = copy.deepcopy(card)
+        self.collect_research_from_other_cards(levelled_card)
+        card.stats().unlocked = True
+        print(f"RESEARCH: Unlocked level {card.stats().level} for {card.name}")
 
     def swap(self, i: int, j: int) -> None:
         temp: Card = self.deck.cards[i]
@@ -146,9 +146,10 @@ class Game:
     def change_card_index(self, amount: int) -> None:
         self.card_index += amount
         if self.card_index not in range(len(self.deck.cards)):
-            print(f"FOCUS: {self.card_index} is invalid")
+            # print(f"FOCUS: {self.card_index} is invalid")
             self.card_index -= amount
-        print(f"FOCUS: {self.card_index} ({self.deck.cards[self.card_index].name})")
+        card = self.deck.cards[self.card_index]
+        print(f"FOCUS: {self.card_index} ({card.name} LVL{card.level})")
 
     def set_build_direction(self, direction: bool) -> None:
         self.build_direction = direction
@@ -158,18 +159,40 @@ class Game:
 class Shop:
     def __init__(self) -> None:
         self.inventory: list[Card] = []
+        self.shop_index: int = 0
+        self.update_shop()
+
+    def update_shop(self):
+        self.inventory.clear()
         for card in Template:
             if not card.value.is_interactable: continue
+            if not card.value.stats().unlocked: continue
             self.inventory.append(card.value)
-        self.shop_index: int = 0
+        self.shop_index = 0
+
+    def update_research(self):
+        self.inventory.clear()
+        for card in Template:
+            if not card.value.is_interactable: continue
+            for level in card.value.levels:
+                if level.unlocked: continue
+                levelled_card = copy.deepcopy(card.value)
+                levelled_card.level = level.level
+                self.inventory.append(levelled_card)
+                break
+        self.shop_index = 0
 
     def change_shop_index(self, index: int) -> None:
         self.shop_index += index
         if self.shop_index not in range(len(self.inventory)):
-            print(f"SHOP: {self.shop_index} is invalid")
+            #print(f"SHOP: {self.shop_index} is invalid")
             self.shop_index -= index
+        card = self.inventory[self.shop_index]
         print(
-            f"SHOP: Selecting {self.inventory[self.shop_index].name} (Price: {self.inventory[self.shop_index].stats().price}")
+            f"SHOP: Selecting {card.name} LVL{card.stats().level} (Price: {card.stats().price} / Research: {card.stats().research_cost})")
 
     def selected_card(self) -> Card:
         return copy.deepcopy(self.inventory[self.shop_index])
+
+    def display(self) -> list[str]:
+        pass

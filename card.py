@@ -62,6 +62,7 @@ class Card:
     def __copy__(self) -> Card:
         new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.is_interactable,
                               self.is_core)
+        new_card.level = self.level
         return new_card
 
     def __deepcopy__(self, memo) -> Card:
@@ -71,6 +72,7 @@ class Card:
         memo[id(self)] = new_card = new_card
         new_card.purchased = copy.deepcopy(self.purchased, memo)
         new_card.charge = copy.deepcopy(self.charge, memo)
+        new_card.level = self.level
         return new_card
 
     def __add__(self, other: Card) -> list[Card]:
