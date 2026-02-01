@@ -146,6 +146,7 @@ class Card:
         self.update_flows()
         self.charge: Box = Box()
         self.height: int = 12
+        self.is_shielded = False
         self.destroyed: bool = False
         self.id: int = Card.ID
         Card.ID += 1
@@ -215,7 +216,10 @@ class Card:
 
     def reset_storage(self) -> None:
         self.charge = Box()
-        excess: Flow = self.get_excess().without(Box.Types.SHIELD, Box.Types.BOOST)
+        excess: Flow = self.get_excess().without(Box.Types.BOOST)
+        if not self.is_shielded:
+            print(f"RESET: {self.name} is not shielded!")
+            excess += self.storage.only(Box.Types.SHIELD) % Flow(shield=36)
         if excess == Flow(): return
         self.storage -= excess
         print(f"RESET: {self.name} -> {excess} -> Void")
@@ -223,9 +227,8 @@ class Card:
             print(f"RESET: {self.name} destroyed!")
 
     def reset_status_effects(self):
-        excess: Flow = self.get_excess().only(Box.Types.SHIELD)
-        excess = excess % Flow(shield=20)
-        excess += self.get_excess().only(Box.Types.BOOST)
+        self.is_shielded = False
+        excess: Flow = self.get_excess().only(Box.Types.BOOST)
         if excess == Flow(): return
         self.storage -= excess
         print(f"RESET: {self.name} -> {excess} -> Void")
@@ -264,7 +267,9 @@ class Card:
             flow = -flow.get_inflow()
             other.storage.absorb(flow)
         if flow == Flow(): return
-
+        if not flow.only(Box.Types.SHIELD) == Flow():
+            print("what")
+            other.is_shielded = True
         print(f"SEND: {self.name} -> {flow} -> {other.name}")
 
     def is_charged(self) -> bool:
@@ -315,11 +320,11 @@ class Level:
 
 class Blueprints:
     CORE = Card("Core", Box(health=1000), [
-        Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=0, boost=0),
+        Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=200, boost=0),
               Flow(energy=+6), price=0, unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
     ], priority=0, is_hidden=True)
     GENERATOR = Card("Generator", Box(health=100), [
-        Level(1, Box(health=100), Flow(energy=12), 60, True),
+        Level(1, Box(health=100, shield=100), Flow(energy=12), 60, True),
         Level(2, Box(health=135), Flow(energy=36), 120, False),
         Level(3, Box(health=180), Flow(energy=72), 180, False),
     ], 1)
@@ -351,7 +356,7 @@ class Blueprints:
         Level(1, Box(health=100), Flow(energy=-5), 250, True, 3, Flow(health=+10)),
     ], 6)
     SHIELD = Card("Shield", Box(health=64), [
-        Level(1, Box(health=64), Flow(energy=-20), 500, True, 2, Flow(shield=+50)),
+        Level(1, Box(health=64, shield=150), Flow(energy=-20), 500, True, 2, Flow(shield=+50)),
     ], 7)
     # don't expect these to work
     DIMENSION = Card("Pocket Dimension", Box(health=0), [
