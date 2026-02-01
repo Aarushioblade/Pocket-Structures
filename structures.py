@@ -354,7 +354,7 @@ class Blueprints:
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100, shield=100), Flow(energy=12), Box(starbit=60), True),
         Level(2, Box(health=135), Flow(energy=36), Box(starbit=120), False),
-        Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False, research_cost=Box(starbit=900)),
+        Level(3, Box(health=180), Flow(energy=72), Box(starbit=180), False),
     ], 1)
     MINE = Card("Laser", Box(health=100), [
         Level(1, Box(health=100), Flow(material=+6, energy=-8), Box(starbit=80), True),

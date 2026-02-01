@@ -126,3 +126,9 @@ class Game:
                 print(f"RESEARCH: Unlocked level {level.level} for {card.name}")
                 return
         print(f"RESEARCH: {card.name} has been fully researched")
+
+    def swap(self, i: int, j: int) -> None:
+        temp: Card = self.deck.cards[i]
+        self.deck.cards[i] = self.deck.cards[j]
+        self.deck.cards[j] = temp
+        print(f"SWAP: {self.deck.cards[j].name} <-> {self.deck.cards[i].name}")

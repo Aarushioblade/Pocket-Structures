@@ -10,7 +10,7 @@ def main():
     game.buy(Blueprints.GENERATOR)
     game.research(Blueprints.GENERATOR)
     game.upgrade(1)
-    game.sell(1)
+    game.swap(0, 1)
     game.research(Blueprints.GENERATOR)
     game.research(Blueprints.GENERATOR)
     game.calculate()
