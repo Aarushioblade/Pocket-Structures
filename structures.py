@@ -192,6 +192,7 @@ class Card:
         return other
 
     def level_up(self):
+        if self.level == len(self.levels): return
         self.level += 1
         self.update_flows()
 
