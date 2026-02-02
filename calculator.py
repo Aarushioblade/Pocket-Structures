@@ -6,9 +6,6 @@ from stuff import Box
 from template import Template
 
 
-# これは何？日本語を書けますよ
-# 英語を書けない？なんで？
-
 class Game:
     def __init__(self, deck: Deck = None):
 
@@ -154,6 +151,9 @@ class Game:
     def set_build_direction(self, direction: bool) -> None:
         self.build_direction = direction
         print(f"BUILD_UP: {self.build_direction}")
+
+    def display(self) -> list[str]:
+        pass
 
 
 class Shop:

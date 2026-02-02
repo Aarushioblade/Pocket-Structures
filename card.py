@@ -204,6 +204,9 @@ class Card:
         other.storage += flow
         print(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
 
+    def display(self) -> list[str]:
+        pass
+
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,
@@ -233,3 +236,6 @@ class Level:
             string += f"| | Unlocked: {self.unlocked}\n"
             string += f"| | Range: {self.range}\n"
         return string
+
+    def display(self) -> list[str]:
+        pass

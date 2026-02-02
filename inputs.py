@@ -22,11 +22,12 @@ game = Game()
 game.deck.add_card(Template.CORE.value)
 shop = Shop()
 research = Shop()
+shop.update_shop()
 research.update_research()
 
 
 def move(direction: int):
-    if menu in [Menu.HOME, Menu.SELL]:
+    if menu in [Menu.HOME, Menu.SELL, Menu.UPGRADE]:
         game.change_card_index(direction)
     elif menu is Menu.SHOP:
         shop.change_shop_index(direction)
