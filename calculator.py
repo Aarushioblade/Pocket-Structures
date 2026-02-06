@@ -152,8 +152,12 @@ class Game:
         self.build_direction = direction
         print(f"BUILD_UP: {self.build_direction}")
 
-    def display(self) -> list[str]:
-        pass
+    def display(self) -> str:
+        string: str = ""
+        for card in self.deck.cards:
+            string += card.display()
+            string += '\n'
+        return string
 
 
 class Shop:
@@ -194,5 +198,10 @@ class Shop:
     def selected_card(self) -> Card:
         return copy.deepcopy(self.inventory[self.shop_index])
 
-    def display(self) -> list[str]:
-        pass
+    def display(self) -> str:
+        string: str = ""
+        for card in self.inventory:
+            string += f"{card.name} (LVL{card.level}) | "
+            string += str(card.stats().price)
+            string += '\n'
+        return string

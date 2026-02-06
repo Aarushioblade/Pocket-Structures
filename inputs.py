@@ -2,6 +2,7 @@ from enum import Enum
 
 from pynput import keyboard as kb
 from calculator import Game, Shop
+from display import Display, Panel
 from template import Template
 
 
@@ -33,6 +34,8 @@ def move(direction: int):
         shop.change_shop_index(direction)
     elif menu is Menu.RESEARCH:
         research.change_shop_index(direction)
+    home_panel.clear()
+    home_panel.write(game.display())
     input_complete()
 
 
@@ -108,6 +111,35 @@ def input_complete():
     print(menu)
 
 
+def write_shop():
+    shop_panel.clear()
+    shop_panel.write("SHOP")
+    shop_panel.write(shop.display())
+
+
+def write_sell():
+    shop_panel.clear()
+    shop_panel.write("SELL")
+    shop_panel.write("Select a building to sell")
+
+
+def write_research():
+    shop_panel.clear()
+    shop_panel.write("RESEARCH")
+    shop_panel.write(research.display())
+
+
+def write_upgrade():
+    shop_panel.clear()
+    shop_panel.write("UPGRADE")
+    shop_panel.write("Select a building to upgrade")
+
+
+display = Display()
+home_panel = Panel(30)
+shop_panel = Panel(45)
+display.add(home_panel, shop_panel)
+
 def on_press(key):
     try:
         key = key.char
@@ -127,6 +159,7 @@ def on_press(key):
                 back()
             case kb.Key.esc:
                 return False
+        display.render()
         return None
     if key.isdigit():
         print(f"digit {key}")
@@ -138,19 +171,26 @@ def on_press(key):
             case 1:
                 print(shop.inventory)
                 menu = Menu.SHOP
+                write_shop()
             case 2:
                 menu = Menu.SELL
+                write_sell()
             case 3:
                 print(research.inventory)
                 menu = Menu.RESEARCH
+                write_research()
             case 4:
                 menu = Menu.UPGRADE
+                write_upgrade()
         input_complete()
     elif key.isalpha():
         key = key.upper()
         print(f"alpha {key}")
     else:
         pass
+    home_panel.clear()
+    home_panel.write(game.display())
+    display.render()
     return None
 
 

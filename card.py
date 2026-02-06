@@ -204,8 +204,10 @@ class Card:
         other.storage += flow
         print(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
 
-    def display(self) -> list[str]:
-        pass
+    def display(self) -> str:
+        string: str = ""
+        string += f"{self.name}"
+        return string
 
 
 class Level:
@@ -237,5 +239,5 @@ class Level:
             string += f"| | Range: {self.range}\n"
         return string
 
-    def display(self) -> list[str]:
+    def display(self) -> str:
         pass
