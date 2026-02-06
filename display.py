@@ -103,6 +103,9 @@ class Info:
             string += line + '\n'
         return string
 
+    def display(self):
+        return str(self)
+
 
 if __name__ == "__main__":
     display = Display()

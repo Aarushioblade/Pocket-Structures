@@ -146,35 +146,67 @@ class Game:
             # print(f"FOCUS: {self.card_index} is invalid")
             self.card_index -= amount
         card = self.deck.cards[self.card_index]
-        print(f"FOCUS: {self.card_index} ({card.name} LVL{card.level})")
+        # print(f"FOCUS: {self.card_index} ({card.name} LVL{card.level})")
 
     def set_build_direction(self, direction: bool) -> None:
         self.build_direction = direction
-        print(f"BUILD_UP: {self.build_direction}")
+        #print(f"BUILD_UP: {self.build_direction}")
 
     def display(self) -> str:
         string: str = ""
-        for card in self.deck.cards:
-            string += card.display()
+        for index, card in enumerate(self.deck.cards):
+            selected = index == self.card_index
+            if selected:
+                string += "> "
+            string += card.display(selected)
             string += '\n'
+        string = string.rstrip()
         return string
 
 
 class Shop:
     def __init__(self) -> None:
         self.inventory: list[Card] = []
-        self.shop_index: int = 0
-        self.update_shop()
+        self.index: int = 0
+        self.update()
 
-    def update_shop(self):
+    def update(self):
         self.inventory.clear()
         for card in Template:
             if not card.value.is_interactable: continue
             if not card.value.stats().unlocked: continue
             self.inventory.append(card.value)
-        self.shop_index = 0
+        self.index = 0
 
-    def update_research(self):
+    def change_index(self, index: int) -> str:
+        self.index += index
+        if self.index not in range(len(self.inventory)):
+            # print(f"SHOP: {self.index} is invalid")
+            self.index -= index
+        card = self.inventory[self.index]
+        return self.select_message(card)
+
+    def selected_card(self) -> Card:
+        return copy.deepcopy(self.inventory[self.index])
+
+    def display(self) -> str:
+        string: str = ""
+        for index, card in enumerate(self.inventory):
+            if index == self.index:
+                string += "> "
+            string += f"{card.name} (LVL{card.level}) | "
+            string += str(card.stats().price)
+            string += '\n'
+        string = string.rstrip()
+        return string
+
+    def select_message(self, card: Card) -> str:
+        # card = self.inventory[self.index]
+        return f"SHOP: Selecting {card.name} LVL{card.stats().level} (Price: {card.stats().price})"
+
+
+class Research(Shop):
+    def update(self):
         self.inventory.clear()
         for card in Template:
             if not card.value.is_interactable: continue
@@ -184,24 +216,7 @@ class Shop:
                 levelled_card.level = level.level
                 self.inventory.append(levelled_card)
                 break
-        self.shop_index = 0
+        self.index = 0
 
-    def change_shop_index(self, index: int) -> None:
-        self.shop_index += index
-        if self.shop_index not in range(len(self.inventory)):
-            #print(f"SHOP: {self.shop_index} is invalid")
-            self.shop_index -= index
-        card = self.inventory[self.shop_index]
-        print(
-            f"SHOP: Selecting {card.name} LVL{card.stats().level} (Price: {card.stats().price} / Research: {card.stats().research_cost})")
-
-    def selected_card(self) -> Card:
-        return copy.deepcopy(self.inventory[self.shop_index])
-
-    def display(self) -> str:
-        string: str = ""
-        for card in self.inventory:
-            string += f"{card.name} (LVL{card.level}) | "
-            string += str(card.stats().price)
-            string += '\n'
-        return string
+    def select_message(self, card: Card) -> str:
+        return f"SHOP: Selecting {card.name} LVL{card.stats().level} (Research: {card.stats().research_cost})"

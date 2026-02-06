@@ -204,9 +204,12 @@ class Card:
         other.storage += flow
         print(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
 
-    def display(self) -> str:
+    def display(self, selected: bool = False) -> str:
         string: str = ""
         string += f"{self.name}"
+        if not selected: return string
+        string += f"\n| Storage: {self.storage}" + '\n'
+        string += f"| Levels: \n{self.stats().display()}"
         return string
 
 
@@ -240,4 +243,4 @@ class Level:
         return string
 
     def display(self) -> str:
-        pass
+        return str(self)
