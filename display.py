@@ -78,30 +78,31 @@ class Panel:
 
 
 class Info:
-    def __init__(self):
+    def __init__(self, width: int = 15):
         self.name: str = ""
         self.lines: list[str] = []
         self.colors: list[Color] = []
+        self.values: list[str] = []
+        self.width: int = width
+        self.color = Color.WHITE
 
-    def add(self, text: str, color: Color = Color.WHITE):
+    def add(self, text: str, value: str, color: Color):
         self.lines.append(text)
         self.colors.append(color)
-
-    def add_info(self, info: Info, color: Color = Color.WHITE):
-        for line, color in zip(info.lines, info.colors):
-            self.lines.append(line)
-            self.colors.append(color)
-
-    def add_tab(self):
-        for i, line in enumerate(self.lines):
-            self.lines[i] = self.colors[i].value + "| " + Color.WHITE.value + line
+        self.values.append(value)
 
     def __str__(self) -> str:
         string: str = ""
-        string += self.name
-        for line in self.lines:
-            string += line + '\n'
-        return string
+        for text, color, value in zip(self.lines, self.colors, self.values):
+            current_width = 2 + len(text) + 2 + len(value)
+            string += f"{color.value}|{self.color.value} "
+            string += f"{text}: "
+            if current_width < self.width:
+                string += " " * (self.width - current_width)
+            string += f"{color.value}{value}{self.color.value}"
+            string += '\n'
+
+        return string.rstrip()
 
     def display(self):
         return str(self)

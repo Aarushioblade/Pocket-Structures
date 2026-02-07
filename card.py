@@ -1,5 +1,6 @@
 import copy
 
+from color import Color
 from stuff import Box, Flow
 
 SHOW_ALL: bool = True
@@ -208,10 +209,34 @@ class Card:
         string: str = ""
         string += f"{self.name}"
         if not selected: return string
-        string += f"\n| Storage: {self.storage}" + '\n'
-        string += f"| Levels: \n{self.stats().display()}"
+        # string += f"\n| Storage: {self.storage}" + '\n'
+        # string += f"| Levels: \n{self.stats().display()}"
+        for stuff in Box.Types:
+            name = stuff.name
+            flow = self.stats().flow.stuff[stuff.value]
+            effect = self.stats().effect_flow.stuff[stuff.value]
+            storage = self.storage.stuff[stuff.value]
+            capacity = self.stats().capacity.stuff[stuff.value]
+            color = Box.colors[stuff]
+            if flow:
+                string += f"\n{color.value}|{Color.WHITE.value} {name}"
+                string += f" FLOW: {color_flow(flow, color)}"
+            if effect:
+                string += f"\n{color.value}|{Color.WHITE.value} {name}"
+                string += f" EFFECT: {color_flow(effect, color)}"
+            if storage | capacity:
+                string += f"\n{color.value}|{Color.WHITE.value} {name}"
+                string += f": {color.value}{storage}/{capacity}{Color.WHITE.value}"
         return string
 
+
+def color_int(value: int, color: Color) -> str:
+    return f"{color.value}{value}{Color.WHITE.value}"
+
+
+def color_flow(value: int, color: Color) -> str:
+    if value < 0: color = Color.RED
+    return f"{color.value}{value:+}{Color.WHITE.value}"
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,
