@@ -11,7 +11,10 @@ shop = Shop()
 research = Research()
 shop.update()
 research.update()
-
+display = Display()
+home_panel = Panel(40)
+shop_panel = Panel(45)
+display.add(home_panel, shop_panel, game.log)
 caption: str = ""
 
 
@@ -29,7 +32,7 @@ def move(direction: int):
         shop_panel.write(research.display())
 
 
-def switch(direction: bool):
+def switch_direction(direction: bool):
     if menu is not Menu.SHOP: return
     game.set_build_direction(direction)
 
@@ -47,6 +50,7 @@ def space():
     match menu:
         case Menu.HOME:
             exit_menu()
+
         case Menu.SHOP:
             if game.can_buy(shop.selected_card().stats().price):
                 set_menu(Menu.SHOP_CONFIRM)
@@ -56,6 +60,7 @@ def space():
         case Menu.SHOP_CONFIRM:
             game.buy(shop.selected_card())
             exit_menu()
+
         case Menu.SELL:
             card = game.deck.cards[game.card_index]
             if card.is_interactable:
@@ -66,6 +71,7 @@ def space():
         case Menu.SELL_CONFIRM:
             game.sell(game.card_index)
             exit_menu()
+
         case Menu.RESEARCH:
             card = research.selected_card()
             if game.can_research(card):
@@ -78,6 +84,7 @@ def space():
             research.update()
             shop.update()
             exit_menu()
+
         case Menu.UPGRADE:
             card = game.deck.cards[game.card_index]
             if game.can_upgrade(game.card_index):
@@ -103,12 +110,6 @@ def back():
         case _:
             set_menu(Menu.HOME)
             shop_panel.clear()
-
-
-display = Display()
-home_panel = Panel(40)
-shop_panel = Panel(45)
-display.add(home_panel, shop_panel, game.log)
 
 
 def set_menu(new_menu: Menu):
@@ -169,9 +170,9 @@ def on_press(key):
             case kb.Key.down:
                 move(1)
             case kb.Key.left:
-                switch(True)
+                switch_direction(True)
             case kb.Key.right:
-                switch(False)
+                switch_direction(False)
             case kb.Key.enter | kb.Key.space:
                 space()
             case kb.Key.tab | kb.Key.backspace | kb.Key.delete:
@@ -183,14 +184,6 @@ def on_press(key):
         home_panel.write(game.display(menu))
         display.render()
         print(caption)
-
-
-
-if __name__ == "__main__":
-    pass
-
-# print("❤ ■ ✦ ⌬ ϟ ▢ ✧ ✩ ☆ ☾ ♡")
-# print("❤ ▢ ✦ ϟ ")
 
 with kb.Listener(on_press=on_press) as listener:
     listener.join()

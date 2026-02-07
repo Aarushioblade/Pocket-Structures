@@ -40,27 +40,7 @@ class Card:
         return hash((self.name, self.id))
 
     def __str__(self) -> str:
-        return f"{self.name} [LVL{self.level}]"
-
-    def old_display(self) -> str:
-        string: str = ""
-        string += f"{self.name}\n"
-        string += f"| Storage: {self.storage}\n"
-        for index, level in enumerate(self.levels):
-            if not (index + 1 == self.level or SHOW_ALL): continue
-            string += f"| Level {index + 1}\n"
-            string += str(level)
-        if SHOW_ALL:
-            string += f"| Level: {self.level}\n"
-            string += f"| Purchased: {self.purchased}\n"
-        string += f"| Charge: {self.charge}\n"
-        string += f"| Priority: {self.priority}\n"
-        string += f"| ID: {self.id:06}\n"
-        if self.is_enemy:
-            string += f"| ENEMY\n"
-        if self.destroyed:
-            string += "| DESTROYED\n"
-        return string
+        return f"{self.name} [LVL{self.level}{" | DESTROYED" if self.destroyed else ""}]"
 
     def __repr__(self) -> str:
         return f"{self.name} ({self.id})"
@@ -235,15 +215,6 @@ class Card:
         string += info.display()
         return string
 
-
-def color_int(value: int, color: Color) -> str:
-    return f"{color.value}{value}{Color.WHITE.value}"
-
-
-def color_flow(value: int, color: Color) -> str:
-    if value < 0: color = Color.RED
-    return f"{color.value}{value:+}{Color.WHITE.value}"
-
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,
                  effect_range: int = 0, effect_flow: Flow = None, research_cost: Box = None):
@@ -255,8 +226,7 @@ class Level:
         self.effect_flow = effect_flow
         self.range: int = effect_range
         self.unlocked: bool = unlocked
-        if not research_cost:
-            research_cost: Box = Box()
+        if not research_cost: research_cost: Box = Box()
         self.research_cost: Box = research_cost
         self.researched: Box = Box()
 

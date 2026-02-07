@@ -16,8 +16,10 @@ class Template(Enum):
     ], 1)
     MINE = Card("Laser Mine", Box(health=100), [
         Level(1, Box(health=100), Flow(material=+6, energy=-8), Box(starbit=80), True),
-        Level(2, Box(health=120), Flow(material=+18, energy=-14), Box(starbit=160), False),
-        Level(3, Box(health=140), Flow(material=+64, energy=-32), Box(starbit=340), False),
+        Level(2, Box(health=120), Flow(material=+18, energy=-14), Box(starbit=160), False,
+              research_cost=Box(starbit=100)),
+        Level(3, Box(health=140), Flow(material=+64, energy=-32), Box(starbit=340), False,
+              research_cost=Box(starbit=100)),
     ], 2)
     FACTORY = Card("Factory", Box(health=100), [
         Level(1, Box(health=100), Flow(material=-6, energy=-3, starbit=+24), Box(starbit=100), True),

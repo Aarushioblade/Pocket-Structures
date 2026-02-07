@@ -1,4 +1,5 @@
 import copy
+import random
 
 from card import Card
 from deck import Deck
@@ -11,13 +12,14 @@ from template import Template
 class Game:
     def __init__(self, deck: Deck = None):
 
-        self.build_direction: bool = True
+        self.build_direction: bool = False
         if deck is None: deck = Deck()
         self.deck: Deck = deck
         self.turn = 1
         self.card_index: int = 0
-        self.log: Panel = Panel(50)
+        self.log: Panel = Panel(55)
         self.deck.log = self.log
+        self.enemy_spawn_rate = 0.05
 
     def get_available_box(self) -> Box:
         available_box = Box()
@@ -82,6 +84,9 @@ class Game:
 
         for card in self.deck.sorted_by_distance():
             card.reset_storage()
+
+        if random.random() < self.enemy_spawn_rate:
+            self.add_enemy()
 
     def can_buy(self, price: Box) -> bool:
         return not self.get_available_box() < price
@@ -176,6 +181,10 @@ class Game:
             string += "+ Preview \n"
         string = string.rstrip()
         return string
+
+    def add_enemy(self):
+        self.deck.add_card(Template.ENEMY.value, random.choice([True, False]))
+        self.log.write("An enemy has spawned in!")
 
 
 class Shop:

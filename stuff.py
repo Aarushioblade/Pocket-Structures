@@ -44,7 +44,7 @@ class Box:
         return string
 
     def __repr__(self):
-        return f"Flow({self.stuff})"
+        return f"Box({self.stuff})"
 
     def __init__(self, health=0, material=0, energy=0, starbit=0, shield=0, boost=0, packed: list[int] = None):
         self.stuff: list[int] = [0] * len(Box.Types)

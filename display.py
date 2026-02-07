@@ -95,6 +95,7 @@ class Info:
         string: str = '\n'
         for text, color, value in zip(self.lines, self.colors, self.values):
             current_width = len(text) + len(value)
+            if "-" in value: color = Color.RED
             if color is not None:
                 current_width += 2
                 string += f"{color.value}| {self.color.value}"
