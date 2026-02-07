@@ -2,6 +2,8 @@ import copy
 
 from card import Card
 from deck import Deck
+from display import Panel
+from menu import Menu
 from stuff import Box
 from template import Template
 
@@ -14,6 +16,8 @@ class Game:
         self.deck: Deck = deck
         self.turn = 1
         self.card_index: int = 0
+        self.log: Panel = Panel(50)
+        self.deck.log = self.log
 
     def get_available_box(self) -> Box:
         available_box = Box()
@@ -54,7 +58,7 @@ class Game:
             card.bonus_send_to(target)
 
     def calculate(self) -> None:
-        print(f"\n - Turn {self.turn} - \n")
+        self.log.write(f"\n - Turn {self.turn} - \n")
         self.turn += 1
 
         for card in self.deck.sorted_by_distance():
@@ -85,15 +89,15 @@ class Game:
     def buy(self, card: Card) -> None:
         if not self.can_buy(card.stats().price):
             raise Exception(f"Can't buy {card.name} for {card.stats().price}")
+        card.log = self.log
         self.collect_purchase_from_other_cards(card)
-        self.deck.add_card(card, is_below=self.build_direction)
-        if not self.build_direction:
-            self.card_index += 1
+        self.card_index = self.deck.add_card(card, is_below=self.build_direction)
+
 
     def sell(self, index: int) -> None:
         card = self.deck.cards[index]
         sell_price: Box = card.purchased * 0.75
-        print(f"SELL: {card.name} >> {sell_price}")
+        self.log.write(f"SELL: {card.name} >> {sell_price}")
         card.storage += sell_price
         self.store_to_other_cards(card)
         del self.deck.cards[index]
@@ -103,13 +107,13 @@ class Game:
     def can_upgrade(self, index: int) -> bool:
         card = self.deck.cards[index]
         if card.level == len(card.levels):
-            print(f"UPGRADE: {card.name} cannot be upgraded any further")
+            self.log.write(f"UPGRADE: {card.name} cannot be upgraded any further")
             return False
         if not card.next_stats().unlocked:
-            print(f"UPGRADE: {card.name} has not unlocked level {card.level + 1}")
+            self.log.write(f"UPGRADE: {card.name} has not unlocked level {card.level + 1}")
             return False
         if self.get_available_box() < card.next_stats().price:
-            print(f"UPGRADE: {card.name} does not have enough resources to upgrade")
+            self.log.write(f"UPGRADE: {card.name} does not have enough resources to upgrade")
             return False
         return True
 
@@ -132,13 +136,13 @@ class Game:
         levelled_card = copy.deepcopy(card)
         self.collect_research_from_other_cards(levelled_card)
         card.stats().unlocked = True
-        print(f"RESEARCH: Unlocked level {card.stats().level} for {card.name}")
+        self.log.write(f"RESEARCH: Unlocked level {card.stats().level} for {card.name}")
 
     def swap(self, i: int, j: int) -> None:
         temp: Card = self.deck.cards[i]
         self.deck.cards[i] = self.deck.cards[j]
         self.deck.cards[j] = temp
-        print(f"SWAP: {self.deck.cards[j].name} <-> {self.deck.cards[i].name}")
+        self.log.write(f"SWAP: {self.deck.cards[j].name} <-> {self.deck.cards[i].name}")
 
     def change_card_index(self, amount: int) -> None:
         self.card_index += amount
@@ -152,14 +156,24 @@ class Game:
         self.build_direction = direction
         #print(f"BUILD_UP: {self.build_direction}")
 
-    def display(self) -> str:
+    def display(self, menu: Menu) -> str:
         string: str = ""
+        in_shop: bool = menu == Menu.SHOP or menu == Menu.SHOP_CONFIRM
+        if in_shop and not self.build_direction:
+            string += "+ Preview \n"
         for index, card in enumerate(self.deck.cards):
             selected = index == self.card_index
             if selected:
-                string += "> "
-            string += card.display(selected)
-            string += '\n'
+                string += "= "
+            else:
+                string += "- "
+            string += card.display(selected) + '\n'
+            # string += str(card)
+            # for line in card.display(selected).split("\n"):
+            #    string += "    " + line + "\n"
+
+        if in_shop and self.build_direction:
+            string += "+ Preview \n"
         string = string.rstrip()
         return string
 
@@ -194,7 +208,7 @@ class Shop:
         for index, card in enumerate(self.inventory):
             if index == self.index:
                 string += "> "
-            string += f"{card.name} (LVL{card.level}) | "
+            string += f"{card} | "
             string += str(card.stats().price)
             string += '\n'
         string = string.rstrip()
@@ -202,7 +216,7 @@ class Shop:
 
     def select_message(self, card: Card) -> str:
         # card = self.inventory[self.index]
-        return f"SHOP: Selecting {card.name} LVL{card.stats().level} (Price: {card.stats().price})"
+        return f"SHOP: Selecting {card} {card.stats().price}"
 
 
 class Research(Shop):
@@ -218,5 +232,16 @@ class Research(Shop):
                 break
         self.index = 0
 
+    def display(self) -> str:
+        string: str = ""
+        for index, card in enumerate(self.inventory):
+            if index == self.index:
+                string += "> "
+            string += f"{card} | "
+            string += str(card.stats().research_cost)
+            string += '\n'
+        string = string.rstrip()
+        return string
+
     def select_message(self, card: Card) -> str:
-        return f"SHOP: Selecting {card.name} LVL{card.stats().level} (Research: {card.stats().research_cost})"
+        return f"RESEARCH: Selecting {card} {card.stats().research_cost}"

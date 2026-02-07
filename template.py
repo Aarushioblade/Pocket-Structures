@@ -39,7 +39,7 @@ class Template(Enum):
         Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), False, 1, Flow(boost=+50)),
     ], 8)
     REGENERATOR = Card("Regenerator", Box(health=100), [
-        Level(1, Box(health=100), Flow(energy=-2, material=-8), Box(starbit=250), True, 3, Flow(health=+10)),
+        Level(1, Box(health=100), Flow(material=-10), Box(starbit=250), True, 3, Flow(health=+10)),
     ], 6)
     SHIELD = Card("Shield", Box(health=64), [
         Level(1, Box(health=64, shield=150), Flow(energy=-20), Box(starbit=500), False, 2, Flow(shield=+50)),

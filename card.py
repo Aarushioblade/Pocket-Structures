@@ -1,6 +1,7 @@
 import copy
 
 from color import Color
+from display import Info
 from stuff import Box, Flow
 
 SHOW_ALL: bool = True
@@ -29,6 +30,7 @@ class Card:
         self.is_shielded = False
         self.destroyed: bool = False
         self.id: int = Card.ID
+        self.log = None
         Card.ID += 1
 
     def __eq__(self, other):
@@ -38,6 +40,9 @@ class Card:
         return hash((self.name, self.id))
 
     def __str__(self) -> str:
+        return f"{self.name} [LVL{self.level}]"
+
+    def old_display(self) -> str:
         string: str = ""
         string += f"{self.name}\n"
         string += f"| Storage: {self.storage}\n"
@@ -83,6 +88,10 @@ class Card:
         other.append(self)
         return other
 
+    def write(self, text: str):
+        if not self.log: return
+        self.log.write(text)
+
     def level_up(self):
         if self.level == len(self.levels): return
         self.level += 1
@@ -101,7 +110,7 @@ class Card:
     def produce(self) -> None:
         self.storage += self.outflow
         if self.outflow == Flow(): return
-        print(f"PRODUCE: {self.name} >> {self.outflow}")
+        self.write(f"PRODUCE: {self.name} >> {self.outflow}")
 
     def is_destroyed(self):
         if self.destroyed: return True
@@ -114,9 +123,9 @@ class Card:
             excess += self.storage.only(Box.Types.SHIELD) % Flow(shield=50)
         if excess == Flow(): return
         self.storage -= excess
-        print(f"RESET: {self.name} -> {excess} -> Void")
+        self.write(f"RESET: {self.name} -> {excess} -> Void")
         if self.is_destroyed():
-            print(f"RESET: {self.name} destroyed!")
+            self.write(f"RESET: {self.name} destroyed!")
 
     def reset_status(self):
         self.charge = Box()
@@ -124,7 +133,7 @@ class Card:
         excess: Flow = self.get_excess().only(Box.Types.BOOST)
         if excess == Flow(): return
         self.storage -= excess
-        print(f"RESET: {self.name} -> {excess} -> Void")
+        self.write(f"RESET: {self.name} -> {excess} -> Void")
 
     def get_excess(self):
         excess: Box = self.storage - self.stats().capacity.to_flow()
@@ -136,7 +145,7 @@ class Card:
         if transfer == Flow(): return
         other.storage -= transfer
         self.charge += transfer
-        print(f"COLLECT: {self.name} <- {transfer} <- {other.name}")
+        self.write(f"COLLECT: {self.name} <- {transfer} <- {other.name}")
 
     def collect_purchase(self, other: Card) -> None:
         required: Flow = self.stats().price.to_flow() - self.purchased
@@ -145,9 +154,9 @@ class Card:
         other.storage -= transfer
         self.purchased += transfer
         if self.level == 1:
-            print(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
+            self.write(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
         else:
-            print(f"UPGRADE: {self.name} <- {transfer} <- {other.name}")
+            self.write(f"UPGRADE: {self.name} <- {transfer} <- {other.name}")
 
     def collect_research(self, other):
         required: Flow = self.stats().research_cost.to_flow() - self.stats().researched
@@ -155,7 +164,7 @@ class Card:
         if transfer == Flow(): return
         other.storage -= transfer
         self.stats().researched += transfer
-        print(f"RESEARCH: {self.name} <- {transfer} <- {other.name}")
+        self.write(f"RESEARCH: {self.name} <- {transfer} <- {other.name}")
 
     def get_storage_transfer(self, other: Card) -> Flow:
         maximum_to_receive: Box = other.stats().capacity - other.storage.to_flow()
@@ -168,7 +177,7 @@ class Card:
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
-        print(f"STORE: {self.name} -> {transfer} -> {other.name}")
+        self.write(f"STORE: {self.name} -> {transfer} -> {other.name}")
 
     def send_to(self, other: Card) -> None:
         flow = self.stats().effect_flow
@@ -180,9 +189,8 @@ class Card:
             other.storage.absorb(flow)
         if flow == Flow(): return
         if not flow.only(Box.Types.SHIELD) == Flow():
-            print("what")
             other.is_shielded = True
-        print(f"SEND: {self.name} -> {flow} -> {other.name}")
+        self.write(f"SEND: {self.name} -> {flow} -> {other.name}")
 
     def is_charged(self) -> bool:
         return self.charge == self.inflow
@@ -192,7 +200,7 @@ class Card:
         bonus_flow: Flow = self.outflow.without(Box.Types.BOOST).boosted(self.storage.stuff[Box.Types.BOOST.value])
         if bonus_flow == Flow(): return
         self.storage += bonus_flow
-        print(f"BONUS: {self.name} >> {bonus_flow}")
+        self.write(f"BONUS: {self.name} >> {bonus_flow}")
 
     def bonus_send_to(self, other: Card) -> None:
         if not self.is_charged(): return
@@ -203,30 +211,28 @@ class Card:
             flow = -flow.get_inflow()
         if flow == Flow(): return
         other.storage += flow
-        print(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
+        self.write(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
 
     def display(self, selected: bool = False) -> str:
         string: str = ""
-        string += f"{self.name}"
+        string += str(self)
         if not selected: return string
         # string += f"\n| Storage: {self.storage}" + '\n'
         # string += f"| Levels: \n{self.stats().display()}"
-        for stuff in Box.Types:
+        info = Info(30)
+        for i in range(len(Box.Types)):
+            stuff = Box.Types(i)
             name = stuff.name
             flow = self.stats().flow.stuff[stuff.value]
             effect = self.stats().effect_flow.stuff[stuff.value]
             storage = self.storage.stuff[stuff.value]
             capacity = self.stats().capacity.stuff[stuff.value]
             color = Box.colors[stuff]
-            if flow:
-                string += f"\n{color.value}|{Color.WHITE.value} {name}"
-                string += f" FLOW: {color_flow(flow, color)}"
-            if effect:
-                string += f"\n{color.value}|{Color.WHITE.value} {name}"
-                string += f" EFFECT: {color_flow(effect, color)}"
-            if storage | capacity:
-                string += f"\n{color.value}|{Color.WHITE.value} {name}"
-                string += f": {color.value}{storage}/{capacity}{Color.WHITE.value}"
+            if flow: info.add(f"{name.capitalize()} flow: ", f"{flow:+}", color)
+            if storage | capacity: info.add(f"{name.capitalize()}: ", f"{storage}/{capacity}", color)
+            if effect: info.add(f"{name.capitalize()} effect: ", f"{effect:+}", color)
+
+        string += info.display()
         return string
 
 

@@ -6,16 +6,18 @@ from card import Card
 class Deck:
     def __init__(self, cards: list[Card] = None):
         self.cards: list[Card] = []
+        self.log = None
         if cards is not None: self.cards = cards
 
-    def add_card(self, other: Card, is_below: bool = True) -> Deck:
+    def add_card(self, other: Card, is_below: bool = True) -> int:
         if not isinstance(other, Card): raise TypeError
         new_card = copy.deepcopy(other)
+        new_card.log = self.log
         if is_below:
             self.cards.append(new_card)
         else:
             self.cards.insert(0, new_card)
-        return self
+        return self.cards.index(new_card)
 
     def __isub__(self, other: Card) -> Deck:
         try:

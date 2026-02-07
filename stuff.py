@@ -22,9 +22,9 @@ class Box:
         HEALTH = 0
         MATERIAL = 1
         ENERGY = 2
-        STARBIT = 3
+        STARBIT = 5
         SHIELD = 4
-        BOOST = 5
+        BOOST = 3
 
     colors = {
         Types.HEALTH: Color.GREEN,

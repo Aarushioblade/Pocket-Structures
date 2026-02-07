@@ -1,23 +1,8 @@
-from _pyrepl.commands import home
-from enum import Enum
-
 from pynput import keyboard as kb
 from calculator import Game, Shop, Research
+from menu import Menu
 from display import Display, Panel
 from template import Template
-
-
-class Menu(Enum):
-    HOME = 0
-    SHOP = 1
-    SHOP_CONFIRM = 2
-    SELL = 3
-    SELL_CONFIRM = 4
-    RESEARCH = 5
-    RESEARCH_CONFIRM = 6
-    UPGRADE = 7
-    UPGRADE_CONFIRM = 8
-
 
 menu: Menu = Menu.HOME
 game = Game()
@@ -28,6 +13,7 @@ shop.update()
 research.update()
 
 caption: str = ""
+
 
 def move(direction: int):
     global caption
@@ -51,17 +37,22 @@ def switch(direction: bool):
 def exit_menu():
     set_menu(menu.HOME)
     shop_panel.clear()
+    game.calculate()
+    global caption
+    caption = ""
+
 
 def space():
     global caption
-    if menu == Menu.HOME: return
     match menu:
+        case Menu.HOME:
+            exit_menu()
         case Menu.SHOP:
             if game.can_buy(shop.selected_card().stats().price):
                 set_menu(Menu.SHOP_CONFIRM)
-                caption = f"CONFIRM: You are buying {shop.selected_card().name}"
+                caption = f"CONFIRM: You are buying {shop.selected_card()}"
             else:
-                caption = f"SHOP: Cannot buy {shop.selected_card().name}"
+                caption = f"SHOP: Cannot buy {shop.selected_card()}"
         case Menu.SHOP_CONFIRM:
             game.buy(shop.selected_card())
             exit_menu()
@@ -69,9 +60,9 @@ def space():
             card = game.deck.cards[game.card_index]
             if card.is_interactable:
                 set_menu(Menu.SELL_CONFIRM)
-                caption = f"CONFIRM: You are selling {card.name}"
+                caption = f"CONFIRM: You are selling {card}"
             else:
-                caption = f"SELL: Cannot sell {card.name}"
+                caption = f"SELL: Cannot sell {card}"
         case Menu.SELL_CONFIRM:
             game.sell(game.card_index)
             exit_menu()
@@ -79,7 +70,7 @@ def space():
             card = research.selected_card()
             if game.can_research(card):
                 set_menu(Menu.RESEARCH_CONFIRM)
-                caption = f"RESEARCH: You are researching level {card.stats().level} for {card.name}"
+                caption = f"RESEARCH: You are researching level {card.stats().level} for {card}"
             else:
                 caption = f"RESEARCH: Cannot research {card.name}"
         case Menu.RESEARCH_CONFIRM:
@@ -91,13 +82,15 @@ def space():
             card = game.deck.cards[game.card_index]
             if game.can_upgrade(game.card_index):
                 set_menu(Menu.UPGRADE_CONFIRM)
-                caption = f"UPGRADE: You are upgrading {card.name} to level {card.next_stats().level}"
+                caption = f"UPGRADE: You are upgrading {card} to level {card.next_stats().level}"
         case Menu.UPGRADE_CONFIRM:
             game.upgrade(game.card_index)
             exit_menu()
 
 
 def back():
+    global caption
+    caption = ""
     match menu:
         case menu.SHOP_CONFIRM:
             set_menu(Menu.SHOP)
@@ -109,11 +102,13 @@ def back():
             set_menu(Menu.UPGRADE)
         case _:
             set_menu(Menu.HOME)
+            shop_panel.clear()
+
 
 display = Display()
 home_panel = Panel(40)
 shop_panel = Panel(45)
-display.add(home_panel, shop_panel)
+display.add(home_panel, shop_panel, game.log)
 
 
 def set_menu(new_menu: Menu):
@@ -146,12 +141,13 @@ def upgrade_menu():
 
 
 def on_press(key):
+    global menu
     try:
         key = key.char
         if key.isdigit():
             print(f"digit {key}")
             key = int(key)
-            global menu
+
             match key:
                 case 0:
                     pass
@@ -173,9 +169,9 @@ def on_press(key):
             case kb.Key.down:
                 move(1)
             case kb.Key.left:
-                switch(False)
-            case kb.Key.right:
                 switch(True)
+            case kb.Key.right:
+                switch(False)
             case kb.Key.enter | kb.Key.space:
                 space()
             case kb.Key.tab | kb.Key.backspace | kb.Key.delete:
@@ -184,15 +180,17 @@ def on_press(key):
                 return False
     finally:
         home_panel.clear()
-        home_panel.write(game.display())
+        home_panel.write(game.display(menu))
         display.render()
-        global caption
         print(caption)
-        caption = ""
 
+
+
+if __name__ == "__main__":
+    pass
+
+# print("❤ ■ ✦ ⌬ ϟ ▢ ✧ ✩ ☆ ☾ ♡")
+# print("❤ ▢ ✦ ϟ ")
 
 with kb.Listener(on_press=on_press) as listener:
     listener.join()
-
-if __name__ == "__main__":
-    print("Press any key to register")

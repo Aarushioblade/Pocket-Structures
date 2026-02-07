@@ -20,7 +20,7 @@ class Display:
         self.height: int = 30
         self.panels: list[Panel] = []
         self.empty_char: str = " "
-        self.separator: str = "|"
+        self.separator: str = " "
         self.spacing: int = 1
 
     def test(self):
@@ -81,27 +81,31 @@ class Info:
     def __init__(self, width: int = 15):
         self.name: str = ""
         self.lines: list[str] = []
-        self.colors: list[Color] = []
+        self.colors: list[Color | None] = []
         self.values: list[str] = []
         self.width: int = width
         self.color = Color.WHITE
 
-    def add(self, text: str, value: str, color: Color):
+    def add(self, text: str, value: str, color: Color | None = None):
         self.lines.append(text)
         self.colors.append(color)
         self.values.append(value)
 
     def __str__(self) -> str:
-        string: str = ""
+        string: str = '\n'
         for text, color, value in zip(self.lines, self.colors, self.values):
-            current_width = 2 + len(text) + 2 + len(value)
-            string += f"{color.value}|{self.color.value} "
-            string += f"{text}: "
+            current_width = len(text) + len(value)
+            if color is not None:
+                current_width += 2
+                string += f"{color.value}| {self.color.value}"
+            string += f"{text}"
             if current_width < self.width:
                 string += " " * (self.width - current_width)
-            string += f"{color.value}{value}{self.color.value}"
+            if color is not None:
+                string += f"{color.value}{value}{self.color.value}"
+            else:
+                string += value
             string += '\n'
-
         return string.rstrip()
 
     def display(self):
