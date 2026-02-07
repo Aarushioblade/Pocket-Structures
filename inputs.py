@@ -12,15 +12,15 @@ research = Research()
 shop.update()
 research.update()
 display = Display()
-home_panel = Panel(40)
-shop_panel = Panel(45)
+home_panel = Panel(50)
+shop_panel = Panel(50)
 display.add(home_panel, shop_panel, game.log)
 caption: str = ""
 
 
 def move(direction: int):
     global caption
-    if menu in [Menu.HOME, Menu.SELL, Menu.UPGRADE]:
+    if menu is Menu.HOME:
         game.change_card_index(direction)
     elif menu is Menu.SHOP:
         caption = shop.change_index(direction)
@@ -30,6 +30,22 @@ def move(direction: int):
         caption = research.change_index(direction)
         shop_panel.clear()
         shop_panel.write(research.display())
+    elif menu is Menu.SELL:
+        game.change_card_index(direction)
+        card = game.deck.cards[game.card_index]
+        if card.is_interactable:
+            caption = f"SELL: Selling {card} for {card.sell_price()}"
+        else:
+            caption = f"SELL: This card cannot be sold"
+    elif menu is Menu.UPGRADE:
+        game.change_card_index(direction)
+        card = game.deck.cards[game.card_index]
+        if card.at_max_level():
+            caption = f"UPGRADE: {card} cannot be levelled up any further"
+        elif card.next_level_unlocked():
+            caption = f"UPGRADE: {card} has not unlocked [LVL{card.level + 1}]"
+        else:
+            caption = f"UPGRADE: {card} -> [LVL{card.next_stats().level}] for {card.next_stats().price}"
 
 
 def switch_direction(direction: bool):
@@ -89,7 +105,7 @@ def space():
             card = game.deck.cards[game.card_index]
             if game.can_upgrade(game.card_index):
                 set_menu(Menu.UPGRADE_CONFIRM)
-                caption = f"UPGRADE: You are upgrading {card} to level {card.next_stats().level}"
+                caption = f"UPGRADE: You are upgrading {card} to [LVL{card.next_stats().level}]"
         case Menu.UPGRADE_CONFIRM:
             game.upgrade(game.card_index)
             exit_menu()
@@ -100,13 +116,13 @@ def back():
     caption = ""
     match menu:
         case menu.SHOP_CONFIRM:
-            set_menu(Menu.SHOP)
+            shop_menu()
         case menu.SELL_CONFIRM:
-            set_menu(Menu.SELL)
+            sell_menu()
         case menu.RESEARCH_CONFIRM:
-            set_menu(Menu.RESEARCH)
+            research_menu()
         case menu.UPGRADE_CONFIRM:
-            set_menu(Menu.UPGRADE)
+            upgrade_menu()
         case _:
             set_menu(Menu.HOME)
             shop_panel.clear()
@@ -121,24 +137,28 @@ def shop_menu():
     set_menu(menu.SHOP)
     shop_panel.clear()
     shop_panel.write(shop.display())
+    move(0)
 
 
 def sell_menu():
     set_menu(menu.SELL)
     shop_panel.clear()
     shop_panel.write("Select a structure to sell")
+    move(0)
 
 
 def research_menu():
     set_menu(menu.RESEARCH)
     shop_panel.clear()
     shop_panel.write(research.display())
+    move(0)
 
 
 def upgrade_menu():
     set_menu(menu.UPGRADE)
     shop_panel.clear()
     shop_panel.write("Select a structure to upgrade")
+    move(0)
 
 
 def on_press(key):

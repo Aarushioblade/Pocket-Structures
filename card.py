@@ -1,6 +1,5 @@
 import copy
 
-from color import Color
 from display import Info
 from stuff import Box, Flow
 
@@ -40,7 +39,8 @@ class Card:
         return hash((self.name, self.id))
 
     def __str__(self) -> str:
-        return f"{self.name} [LVL{self.level}{" | DESTROYED" if self.destroyed else ""}]"
+        # return self.name
+        return f"[LVL{self.level}] {"Destroyed " if self.destroyed else ""}{self.name}"
 
     def __repr__(self) -> str:
         return f"{self.name} ({self.id})"
@@ -193,13 +193,10 @@ class Card:
         other.storage += flow
         self.write(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
 
-    def display(self, selected: bool = False) -> str:
-        string: str = ""
-        string += str(self)
-        if not selected: return string
-        # string += f"\n| Storage: {self.storage}" + '\n'
-        # string += f"| Levels: \n{self.stats().display()}"
-        info = Info(30)
+    def display(self, selected: bool = False, include_name: bool = True, width: int = 30, name_value: str = "") -> Info:
+        info = Info(width)
+        if include_name: info.add(str(self), name_value)
+        if not selected: return info
         for i in range(len(Box.Types)):
             stuff = Box.Types(i)
             name = stuff.name
@@ -208,12 +205,21 @@ class Card:
             storage = self.storage.stuff[stuff.value]
             capacity = self.stats().capacity.stuff[stuff.value]
             color = Box.colors[stuff]
-            if flow: info.add(f"{name.capitalize()} flow: ", f"{flow:+}", color)
-            if storage | capacity: info.add(f"{name.capitalize()}: ", f"{storage}/{capacity}", color)
-            if effect: info.add(f"{name.capitalize()} effect: ", f"{effect:+}", color)
+            if flow: info.add(f"{name.capitalize()} flow ", f"{flow:+}", color)
+            if storage | capacity: info.add(f"{name.capitalize()} ", f"{storage}/{capacity}", color)
+            if effect: info.add(f"{name.capitalize()} effect ", f"{effect:+}", color)
 
-        string += info.display()
-        return string
+        return info
+
+    def sell_price(self) -> Box:
+        return self.purchased * 0.75
+
+    def at_max_level(self) -> bool:
+        return self.level == len(self.levels)
+
+    def next_level_unlocked(self) -> bool:
+        if self.at_max_level(): return False
+        return not self.next_stats().unlocked
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,

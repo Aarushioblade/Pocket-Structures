@@ -87,6 +87,9 @@ class Deck:
                 return index
         return None
 
+    def index_of(self, card: Card) -> int:
+        return self.cards.index(card)
+
     def get_core(self) -> Card:
         for card in self.cards:
             if card.is_core:

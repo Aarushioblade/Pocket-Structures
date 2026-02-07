@@ -3,7 +3,7 @@ import random
 
 from card import Card
 from deck import Deck
-from display import Panel
+from display import Panel, Info
 from menu import Menu
 from stuff import Box
 from template import Template
@@ -85,6 +85,17 @@ class Game:
         for card in self.deck.sorted_by_distance():
             card.reset_storage()
 
+        for index, card in enumerate(self.deck.cards):
+            if not card.is_enemy: continue
+            core_index = self.deck.index_of(self.deck.get_core())
+            if index < core_index:
+                direction = +1
+            else:
+                direction = -1
+            other = self.deck.cards[index + direction]
+            if other.destroyed and not other.is_core:
+                self.swap(index, index + direction)
+
         if random.random() < self.enemy_spawn_rate:
             self.add_enemy()
 
@@ -101,8 +112,8 @@ class Game:
 
     def sell(self, index: int) -> None:
         card = self.deck.cards[index]
-        sell_price: Box = card.purchased * 0.75
-        self.log.write(f"SELL: {card.name} >> {sell_price}")
+        sell_price: Box = card.sell_price()
+        self.log.write(f"SELL: {card} >> {sell_price}")
         card.storage += sell_price
         self.store_to_other_cards(card)
         del self.deck.cards[index]
@@ -112,20 +123,20 @@ class Game:
     def can_upgrade(self, index: int) -> bool:
         card = self.deck.cards[index]
         if card.level == len(card.levels):
-            self.log.write(f"UPGRADE: {card.name} cannot be upgraded any further")
+            self.log.write(f"UPGRADE: {card} cannot be upgraded any further")
             return False
         if not card.next_stats().unlocked:
-            self.log.write(f"UPGRADE: {card.name} has not unlocked level {card.level + 1}")
+            self.log.write(f"UPGRADE: {card} has not unlocked [LVL{card.level + 1}]")
             return False
         if self.get_available_box() < card.next_stats().price:
-            self.log.write(f"UPGRADE: {card.name} does not have enough resources to upgrade")
+            self.log.write(f"UPGRADE: {card} does not have enough resources to upgrade")
             return False
         return True
 
     def upgrade(self, index: int) -> None:
         card = self.deck.cards[index]
         if not self.can_upgrade(index):
-            raise Exception(f"Can't upgrade {card.name}!")
+            raise Exception(f"Can't upgrade {card}!")
         card_value = card.purchased.to_flow()
         card.purchased = Box()
         card.level_up()
@@ -147,7 +158,7 @@ class Game:
         temp: Card = self.deck.cards[i]
         self.deck.cards[i] = self.deck.cards[j]
         self.deck.cards[j] = temp
-        self.log.write(f"SWAP: {self.deck.cards[j].name} <-> {self.deck.cards[i].name}")
+        self.log.write(f"SWAP: {self.deck.cards[j]} <-> {self.deck.cards[i]}")
 
     def change_card_index(self, amount: int) -> None:
         self.card_index += amount
@@ -172,7 +183,7 @@ class Game:
                 string += "= "
             else:
                 string += "- "
-            string += card.display(selected) + '\n'
+            string += card.display(selected, width=50).display() + '\n'
             # string += str(card)
             # for line in card.display(selected).split("\n"):
             #    string += "    " + line + "\n"
@@ -183,7 +194,8 @@ class Game:
         return string
 
     def add_enemy(self):
-        self.deck.add_card(Template.ENEMY.value, random.choice([True, False]))
+        enemy = self.deck.add_card(Template.ENEMY.value, random.choice([True, False]))
+        self.card_index = enemy
         self.log.write("An enemy has spawned in!")
 
 
@@ -213,19 +225,14 @@ class Shop:
         return copy.deepcopy(self.inventory[self.index])
 
     def display(self) -> str:
-        string: str = ""
+        info = Info(50)
         for index, card in enumerate(self.inventory):
-            if index == self.index:
-                string += "> "
-            string += f"{card} | "
-            string += str(card.stats().price)
-            string += '\n'
-        string = string.rstrip()
-        return string
+            info.extend(card.display(index == self.index, name_value=str(card.stats().price)))
+        return "SHOP\n\n" + info.display()
 
     def select_message(self, card: Card) -> str:
         # card = self.inventory[self.index]
-        return f"SHOP: Selecting {card} {card.stats().price}"
+        return f"SHOP: Selecting {card} for {card.stats().price}"
 
 
 class Research(Shop):
@@ -242,15 +249,10 @@ class Research(Shop):
         self.index = 0
 
     def display(self) -> str:
-        string: str = ""
+        info = Info(50)
         for index, card in enumerate(self.inventory):
-            if index == self.index:
-                string += "> "
-            string += f"{card} | "
-            string += str(card.stats().research_cost)
-            string += '\n'
-        string = string.rstrip()
-        return string
+            info.extend(card.display(index == self.index, name_value=str(card.stats().research_cost)))
+        return "RESEARCH\n\n" + info.display()
 
     def select_message(self, card: Card) -> str:
-        return f"RESEARCH: Selecting {card} {card.stats().research_cost}"
+        return f"RESEARCH: Selecting {card} for {card.stats().research_cost}"

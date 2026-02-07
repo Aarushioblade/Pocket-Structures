@@ -94,11 +94,11 @@ class Info:
     def __str__(self) -> str:
         string: str = '\n'
         for text, color, value in zip(self.lines, self.colors, self.values):
-            current_width = len(text) + len(value)
+            current_width = rl_len(text) + rl_len(value)
             if "-" in value: color = Color.RED
             if color is not None:
-                current_width += 2
-                string += f"{color.value}| {self.color.value}"
+                current_width += 5
+                string += f"{color.value}|    {self.color.value}"
             string += f"{text}"
             if current_width < self.width:
                 string += " " * (self.width - current_width)
@@ -107,10 +107,15 @@ class Info:
             else:
                 string += value
             string += '\n'
-        return string.rstrip()
+        return string.strip()
 
     def display(self):
         return str(self)
+
+    def extend(self, other: Info):
+        self.lines.extend(other.lines)
+        self.colors.extend(other.colors)
+        self.values.extend(other.values)
 
 
 if __name__ == "__main__":
