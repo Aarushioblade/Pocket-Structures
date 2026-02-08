@@ -11,3 +11,5 @@ class Menu(Enum):
     RESEARCH_CONFIRM = 6
     UPGRADE = 7
     UPGRADE_CONFIRM = 8
+    SWAP = 9
+    SWAP_CONFIRM = 10

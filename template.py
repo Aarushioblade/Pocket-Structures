@@ -7,7 +7,7 @@ from stuff import Box, Flow
 class Template(Enum):
     CORE = Card("Core", Box(health=1000, starbit=1000), [
         Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=200, boost=0),
-              Flow(energy=+6), price=Box(), unlocked=True, effect_range=1, effect_flow=Flow(health=+0))
+              Flow(energy=+6), price=Box(), unlocked=True, effect_range=0, effect_flow=Flow(health=+0))
     ], priority=0, is_interactable=False, is_core=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100, shield=100), Flow(energy=12), Box(starbit=60), True),
@@ -33,29 +33,31 @@ class Template(Enum):
     # not required to work
     HYPERBEAM = Card("Hyperbeam", Box(health=120), [
         Level(1, Box(health=120), Flow(energy=-20), Box(starbit=200), True, 2, Flow(health=-20)),
-    ], 5)
+    ], 5, requires_enemies=True)
     ENEMY = Card("Enemy", Box(health=60), [
         Level(1, Box(health=60), Flow(), Box(starbit=50), True, 1, effect_flow=Flow(health=-15)),
     ], 9, is_enemy=True, is_interactable=False)
-    BOOST = Card("Boost", Box(health=48), [
-        Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), False, 1, Flow(boost=+50)),
+    BOOST = Card("Booster", Box(health=48), [
+        Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), False, 1, Flow(boost=+50),
+              research_cost=Box(starbit=900)),
     ], 8)
     REGENERATOR = Card("Regenerator", Box(health=100), [
         Level(1, Box(health=100), Flow(material=-10), Box(starbit=250), True, 3, Flow(health=+10)),
     ], 6)
     SHIELD = Card("Shield", Box(health=64), [
-        Level(1, Box(health=64, shield=150), Flow(energy=-20), Box(starbit=500), False, 2, Flow(shield=+50)),
+        Level(1, Box(health=64, shield=150), Flow(energy=-20), Box(starbit=500), False, 2, Flow(shield=+50),
+              research_cost=Box(starbit=650)),
     ], 7)
     # don't expect these to work
     DIMENSION = Card("Pocket Dimension", Box(health=0), [
         Level(1, Box(health=0), Flow(energy=-100), Box(starbit=900), False, research_cost=Box(starbit=1400)),
-    ], 8)
+    ], 8, is_interactable=False)
     PARALLEL = Card("Parallel Stacker", Box(health=0), [
         Level(1, Box(health=0), Flow(energy=-110), Box(starbit=1000), False),
-    ], 8)
+    ], 8, is_interactable=False)
     DESTROYER = Card("Destroyer Base", Box(health=200), [
         Level(1, Box(health=200), Flow(health=-30, energy=-50), Box(starbit=1200), False),
-    ], 6)
+    ], 6, is_interactable=False)
 
 
 if __name__ == '__main__':

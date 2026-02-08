@@ -2,12 +2,22 @@ import copy
 import random
 
 from card import Card
+from color import Color
 from deck import Deck
-from display import Panel, Info
+from display import Info, LogPanel
 from menu import Menu
 from stuff import Box
 from template import Template
 
+
+# TODO:
+# More readable log sheet
+# Increases in enemy difficulty
+# Shows card status
+# Shows card range / effect
+# Game over screen
+# Win screen
+# Fully upgradable card templates
 
 class Game:
     def __init__(self, deck: Deck = None):
@@ -17,7 +27,7 @@ class Game:
         self.deck: Deck = deck
         self.turn = 1
         self.card_index: int = 0
-        self.log: Panel = Panel(55)
+        self.log: LogPanel = LogPanel(55)
         self.deck.log = self.log
         self.enemy_spawn_rate: float = 0.05
         self.menu: Menu = Menu.HOME
@@ -61,7 +71,7 @@ class Game:
             card.bonus_send_to(target)
 
     def calculate(self) -> None:
-        self.log.write(f"\n - Turn {self.turn} - \n")
+        self.log.write(f" - Turn {self.turn} - ")
         self.turn += 1
 
         for card in self.deck.sorted_by_distance():
@@ -71,7 +81,14 @@ class Game:
             for card in self.deck.sorted_by_distance():
                 if card.is_destroyed(): continue
                 if card.priority != priority: continue
-                if self.get_available_box() < card.inflow: continue
+                if self.get_available_box() < card.inflow:
+                    card.action = "LACK RESOURCES"
+                    continue
+                if card.requires_enemies:
+                    if not self.enemies_in_range(card):
+                        card.action = "IDLE"
+                        continue
+                card.action = "ACTIVE"
                 self.collect_from_other_cards(card)
                 self.send_to_other_cards(card)
                 card.produce()
@@ -102,7 +119,7 @@ class Game:
             self.add_enemy()
 
         if self.deck.get_core().is_destroyed():
-            print("CORE DESTROYED - GAME OVER!")
+            self.log.write(f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER!{Color.WHITE.value}")
 
     def can_buy(self, price: Box) -> bool:
         return not self.get_available_box() < price
@@ -127,6 +144,7 @@ class Game:
 
     def can_upgrade(self, index: int) -> bool:
         card = self.deck.cards[index]
+        if card.is_enemy: return False
         if card.level == len(card.levels):
             self.log.write(f"UPGRADE: {card} cannot be upgraded any further")
             return False
@@ -225,7 +243,12 @@ class Game:
         self.card_index = enemy
         enemy_card = self.deck.cards[enemy]
         enemy_card.purchased = enemy_card.stats().price * 4
-        self.log.write("An enemy has spawned in!")
+        self.log.write(f"{Color.RED.value}GAME: {enemy_card} has entered the base! {Color.WHITE.value}")
+
+    def enemies_in_range(self, card: Card) -> bool:
+        for other in self.deck.in_range(card):
+            if other.is_enemy: return True
+        return False
 
 
 class Shop:

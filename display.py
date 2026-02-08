@@ -1,4 +1,7 @@
+import copy
+
 from color import Color
+from stuff import Box
 
 
 def rl_len(text) -> int:
@@ -17,7 +20,7 @@ def hidden_char_count(text) -> int:
 class Display:
     def __init__(self):
         self.width: int = 60
-        self.height: int = 30
+        self.height: int = 40
         self.panels: list[Panel] = []
         self.empty_char: str = " "
         self.separator: str = " "
@@ -45,10 +48,10 @@ class Display:
             line: str = self.separator
             for panel in self.panels:
                 if panel.hidden: continue
-                if i not in range(len(panel.lines)):
+                if i not in range(len(panel.get_lines())):
                     line += self.empty_char * panel.width
                 else:
-                    line += self.fit_to_width(panel.lines[i], panel.width)
+                    line += self.fit_to_width(panel.get_lines()[i], panel.width)
                 line += self.separator * self.spacing
             lines.append(line)
         lines.reverse()
@@ -80,6 +83,12 @@ class Panel:
 
     def hide(self):
         self.hidden = True
+
+    def set(self, text: str, index: int = 0):
+        self.lines[index] = text
+
+    def get_lines(self) -> list[str]:
+        return self.lines
 
 
 class Info:
@@ -128,6 +137,7 @@ class InfoPanel(Panel):
         super().__init__(width)
 
     def load(self, directory: str):
+        self.clear()
         self.write(f"{directory.upper()}\n")
         with open(f"text files/{directory.lower()}.txt") as file:
             for line in file:
@@ -137,9 +147,13 @@ class InfoPanel(Panel):
 class LogPanel(Panel):
     def __init__(self, width: int):
         super().__init__(width)
+        self.page: int = 0
+        self.page_length: int = 30
+        self.pages: list[list[str]] = []
         self.all_lines: list[str] = []
-        self.stuff_filter: str = ""
-        self.action_filter: str = ""
+        self.stuff_fiter: list[str] = []
+        self.action_filter: list[str] = []
+        self.to_pages([])
 
     def write(self, text: str):
         for line in text.split('\n'):
@@ -147,19 +161,88 @@ class LogPanel(Panel):
         self.filter()
 
     def clear(self):
-        super().clear()
         self.all_lines.clear()
 
+    def add_stuff_filter(self, stuff: str):
+        self.stuff_fiter.append(stuff)
+        self.filter()
+
+    def add_action_filter(self, stuff: str):
+        self.action_filter.append(stuff)
+        self.filter()
+
+    def clear_filters(self):
+        self.stuff_fiter.clear()
+        self.action_filter.clear()
+        self.filter()
+
     def filter(self):
-        self.lines.clear()
+        filtered_lines: list[str] = []
+
         for line in self.all_lines:
-            if self.stuff_filter:
-                if not line.count(self.stuff_filter):
-                    continue
-            if self.action_filter:
-                if not line.count(self.action_filter):
-                    continue
-            self.lines.append(line)
+            filter_satisfied: bool = False
+            if line.count("Turn") or line.count("GAME"):
+                filter_satisfied = True
+
+            stuff_satisfied: bool = not self.stuff_fiter
+            action_satisfied: bool = not self.action_filter
+            for stuff in self.stuff_fiter:
+                if line.count(stuff.upper()):
+                    stuff_satisfied = True
+            for action in self.action_filter:
+                if line.count(action.upper()):
+                    action_satisfied = True
+
+            if stuff_satisfied and action_satisfied:
+                filter_satisfied = True
+
+            if filter_satisfied:
+                filtered_lines.append(line)
+
+        without_repeats: list[str] = []
+
+        for i in range(len(filtered_lines) - 1):
+            if filtered_lines[i + 1].count("Turn") and filtered_lines[i].count("Turn"): continue
+            without_repeats.append(filtered_lines[i])
+        if not filtered_lines[-1].count("Turn"): without_repeats.append(filtered_lines[-1])
+        self.to_pages(without_repeats)
+
+    def flip_page(self, amount: int):
+        self.page += amount
+        if not self.page in range(len(self.pages)):
+            self.page -= amount
+
+    def to_pages(self, filtered_lines: list[str]):
+        current_page: list[str] = []
+        self.pages.clear()
+        for line in filtered_lines:
+            current_page.append(line)
+            if len(current_page) > self.page_length:
+                self.pages.append(copy.copy(current_page))
+                current_page.clear()
+        self.pages.append(current_page)
+        self.flip_page(0)
+
+    def get_lines(self) -> list[str]:
+        new_lines: list[str] = copy.deepcopy(self.pages[self.page])
+        new_lines.insert(0, "")
+        stuff_filters: str = ""
+        for stuff in Box.Types:
+            if stuff.name.upper() in self.stuff_fiter:
+                stuff_filters += Box.colors[stuff]
+            else:
+                stuff_filters += Color.BLACK.value
+            stuff_filters += f"[{stuff.name.upper()}] "
+        stuff_filters += Color.WHITE.value
+        new_lines.insert(0, "Filters: ")
+        new_lines.insert(0, stuff_filters)
+        new_lines.insert(0, f"Page {len(self.pages) - self.page}/{len(self.pages)}")
+        return new_lines
+
+    def rem_stuff_filter(self, stuff: str):
+        self.stuff_fiter.remove(stuff)
+        self.filter()
+
 
 if __name__ == "__main__":
     display = Display()

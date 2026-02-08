@@ -18,6 +18,7 @@ def colored_string(box_type: Box.Types, value: str) -> str:
 
 
 class Box:
+
     class Types(Enum):
         HEALTH = 0
         MATERIAL = 1
@@ -33,6 +34,15 @@ class Box:
         Types.STARBIT: Color.MAGENTA,
         Types.SHIELD: Color.CYAN,
         Types.BOOST: Color.CYAN,
+    }
+
+    keybinds = {
+        Types.HEALTH: "H",
+        Types.MATERIAL: "I",
+        Types.ENERGY: "J",
+        Types.STARBIT: "K",
+        Types.SHIELD: "L",
+        Types.BOOST: "M",
     }
 
     def __str__(self) -> str:

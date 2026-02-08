@@ -1,4 +1,4 @@
-The Core is everything you need
+The core is everything you need
 to keep your base operational.
 
 It can store a small amount of

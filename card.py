@@ -1,7 +1,7 @@
 import copy
 
 from color import Color
-from display import Info
+from display import Info, LogPanel
 from stuff import Box, Flow
 
 SHOW_ALL: bool = True
@@ -11,7 +11,8 @@ class Card:
     ID: int = 0
 
     def __init__(self, name: str, storage: Box, levels: list[Level], priority: int, is_enemy: bool = False,
-                 is_interactable: bool = True, is_core: bool = False):
+                 is_interactable: bool = True, is_core: bool = False, requires_enemies: bool = False):
+        self.requires_enemies: bool = requires_enemies
         self.name: str = name
         self.storage: Box = storage
         self.levels: list[Level] = levels
@@ -30,7 +31,8 @@ class Card:
         self.is_shielded = False
         self.destroyed: bool = False
         self.id: int = Card.ID
-        self.log = None
+        self.log: LogPanel | None = None
+        self.action: str | None = None
         Card.ID += 1
 
     def __eq__(self, other):
@@ -48,14 +50,14 @@ class Card:
 
     def __copy__(self) -> Card:
         new_card: Card = Card(self.name, self.storage, self.levels, self.priority, self.is_enemy, self.is_interactable,
-                              self.is_core)
+                              self.is_core, self.requires_enemies)
         new_card.level = self.level
         return new_card
 
     def __deepcopy__(self, memo) -> Card:
         new_storage: Box = copy.deepcopy(self.storage, memo)
         new_card: Card = Card(self.name, new_storage, self.levels, self.priority, self.is_enemy, self.is_interactable,
-                              self.is_core)
+                              self.is_core, self.requires_enemies)
         memo[id(self)] = new_card = new_card
         new_card.purchased = copy.deepcopy(self.purchased, memo)
         new_card.charge = copy.deepcopy(self.charge, memo)
@@ -104,7 +106,7 @@ class Card:
             excess += self.storage.only(Box.Types.SHIELD) % Flow(shield=50)
         if excess == Flow(): return
         self.storage -= excess
-        self.write(f"RESET: {self.name} -> {excess} -> Void")
+        # self.write(f"RESET: {self.name} -> {excess} -> Void")
         if self.is_destroyed():
             self.write(f"RESET: {self.name} destroyed!")
 
@@ -114,7 +116,7 @@ class Card:
         excess: Flow = self.get_excess().only(Box.Types.BOOST)
         if excess == Flow(): return
         self.storage -= excess
-        self.write(f"RESET: {self.name} -> {excess} -> Void")
+        #self.write(f"RESET: {self.name} -> {excess} -> Void")
 
     def get_excess(self):
         excess: Box = self.storage - self.stats().capacity.to_flow()
@@ -158,7 +160,7 @@ class Card:
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
-        self.write(f"STORE: {self.name} -> {transfer} -> {other.name}")
+        #self.write(f"STORE: {self.name} -> {transfer} -> {other.name}")
 
     def send_to(self, other: Card) -> None:
         flow = self.stats().effect_flow

@@ -4,10 +4,10 @@ destroyed as soon as possible.
 
 Enemies originate from deep space
 and feed on starbits, which is
-unfortunate because the Core
+unfortunate because the core
 is filled with them.
 
-While the Core is their main
+While the core is their main
 target, they will destroy anything
 that gets in their way.
 
