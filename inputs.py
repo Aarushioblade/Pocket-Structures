@@ -1,7 +1,7 @@
 from pynput import keyboard as kb
 from calculator import Game, Shop, Research
 from menu import Menu
-from display import Display, Panel
+from display import Display, Panel, InfoPanel
 from template import Template
 
 menu: Menu = Menu.HOME
@@ -14,9 +14,13 @@ research.update()
 display = Display()
 home_panel = Panel(50)
 shop_panel = Panel(50)
-display.add(home_panel, shop_panel, game.log)
+info_panel = InfoPanel(25)
+display.add(info_panel, home_panel, shop_panel, game.log)
 caption: str = ""
 
+info_panel.load("intro")
+shop_panel.hide()
+game.log.hide()
 
 def move(direction: int):
     global caption
@@ -161,6 +165,39 @@ def upgrade_menu():
     move(0)
 
 
+def show_key_actions():
+    string: str = ""
+    if menu is Menu.HOME:
+        string += "UP/DOWN - Change Selection | "
+        string += "SPACE/ENTER - End Turn | "
+        string += "1 - Shop | "
+        string += "2 - Sell | "
+        string += "3 - Research | "
+        string += "4 - Upgrade | "
+        string += "5 - Log Panel | "
+        string += "6 - Help "
+    else:
+        string += "UP/DOWN - Change Selection | "
+        if menu in [Menu.SHOP_CONFIRM, Menu.SELL_CONFIRM, Menu.RESEARCH_CONFIRM, Menu.UPGRADE_CONFIRM]:
+            string += "SPACE/ENTER - Confirm | "
+            string += "TAB/DELETE - Go Back "
+        else:
+            match menu:
+                case Menu.SHOP:
+                    string += "LEFT/RIGHT - Change build position | "
+                    string += "SPACE/ENTER - Buy | "
+                case Menu.SELL:
+                    string += "SPACE/ENTER - Sell | "
+                case Menu.RESEARCH:
+                    string += "SPACE/ENTER - Research | "
+                case Menu.UPGRADE:
+                    string += "SPACE/ENTER - Upgrade | "
+
+            string += "TAB/DELETE - Home "
+    print(string, end="")
+
+
+
 def on_press(key):
     global menu
     try:
@@ -168,7 +205,6 @@ def on_press(key):
         if key.isdigit():
             print(f"digit {key}")
             key = int(key)
-
             match key:
                 case 0:
                     pass
@@ -203,7 +239,7 @@ def on_press(key):
         home_panel.clear()
         home_panel.write(game.display(menu))
         display.render()
-        print(caption)
+        show_key_actions()
 
 with kb.Listener(on_press=on_press) as listener:
     listener.join()

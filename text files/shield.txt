@@ -1,0 +1,22 @@
+Generates a force field that
+surrounds nearby structures,
+which protects from enemy
+attacks.
+
+When an enemy attacks a shielded
+structure, it has to break through
+that shield first before it can
+damage the building. From its
+design, a shield can completely
+protect structures from weak
+enemy attacks.
+
+While shields are more effective
+at defending than regenerators,
+they have a slightly lower range,
+a very low amount of health,
+and consume extremely high
+amounts of energy. Field strength
+dissipates rapidly if the shield
+loses power, and shields cannot
+regenerate any health.

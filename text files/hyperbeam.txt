@@ -1,0 +1,10 @@
+Fires a high-energy beam at
+enemies, dealing a significant
+amount of damage.
+
+Though only for a brief moment,
+the energy needed to fire the
+hyperbeam is enormous. To account
+for these sudden drops in energy,
+it is recommended to build power
+boxes to stabilize energy flow.

@@ -154,7 +154,7 @@ class Card:
 
     def store(self, other: Card) -> None:
         if other.is_enemy: return
-        transfer: Flow = self.get_storage_transfer(other).without(Box.Types.SHIELD, Box.Types.BOOST)
+        transfer: Flow = self.get_storage_transfer(other).without(Box.Types.HEALTH, Box.Types.SHIELD, Box.Types.BOOST)
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
@@ -207,9 +207,10 @@ class Card:
             capacity = self.stats().capacity.stuff[stuff.value]
             color = Box.colors[stuff]
             if flow: info.add(f"{name.capitalize()} flow ", f"{flow:+}", color)
-            if storage | capacity: info.add(f"{name.capitalize()} ", f"{storage}/{capacity}", color)
+            if storage or (capacity and not (Box.Types(i) is Box.Types.SHIELD)):
+                info.add(f"{name.capitalize()} ", f"{storage}/{capacity}", color)
             if effect: info.add(f"{name.capitalize()} effect ", f"{effect:+}", color)
-
+        if self.stats().range: info.add("Range", f"{self.stats().range}", Color.WHITE)
         return info
 
     def sell_price(self) -> Flow:

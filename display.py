@@ -44,6 +44,7 @@ class Display:
         for i in range(self.height):
             line: str = self.separator
             for panel in self.panels:
+                if panel.hidden: continue
                 if i not in range(len(panel.lines)):
                     line += self.empty_char * panel.width
                 else:
@@ -65,16 +66,20 @@ class Panel:
     def __init__(self, width: int):
         self.width: int = width
         self.lines: list[str] = []
+        self.hidden: bool = False
 
     def write(self, text: str):
-        if text.count('\n') == 0:
-            self.lines.insert(0, text)
-            return
         for line in text.split('\n'):
             self.lines.insert(0, line)
 
     def clear(self):
         self.lines.clear()
+
+    def show(self):
+        self.hidden = False
+
+    def hide(self):
+        self.hidden = True
 
 
 class Info:
@@ -117,6 +122,44 @@ class Info:
         self.colors.extend(other.colors)
         self.values.extend(other.values)
 
+
+class InfoPanel(Panel):
+    def __init__(self, width: int):
+        super().__init__(width)
+
+    def load(self, directory: str):
+        self.write(f"{directory.upper()}\n")
+        with open(f"text files/{directory.lower()}.txt") as file:
+            for line in file:
+                self.write(line.strip())
+
+
+class LogPanel(Panel):
+    def __init__(self, width: int):
+        super().__init__(width)
+        self.all_lines: list[str] = []
+        self.stuff_filter: str = ""
+        self.action_filter: str = ""
+
+    def write(self, text: str):
+        for line in text.split('\n'):
+            self.all_lines.insert(0, line)
+        self.filter()
+
+    def clear(self):
+        super().clear()
+        self.all_lines.clear()
+
+    def filter(self):
+        self.lines.clear()
+        for line in self.all_lines:
+            if self.stuff_filter:
+                if not line.count(self.stuff_filter):
+                    continue
+            if self.action_filter:
+                if not line.count(self.action_filter):
+                    continue
+            self.lines.append(line)
 
 if __name__ == "__main__":
     display = Display()

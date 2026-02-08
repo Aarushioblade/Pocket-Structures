@@ -1,10 +1,10 @@
-/+\
+/=\
  |
  |
 [1] Core (LVL1)
  |  > Health || 100
  |  > Damage || 200
-\+/
+\=/
 
 [+] Preview
  |

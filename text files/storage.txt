@@ -1,0 +1,11 @@
+Stores excess material, which it
+can transport to other structures
+later when needed.
+
+Storage structures are stronger
+than most other types of
+structures.
+
+When destroyed, it will attempt to
+store its stored material somewhere
+else, but any excess will be lost.

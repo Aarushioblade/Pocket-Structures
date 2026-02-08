@@ -1,0 +1,18 @@
+Mines for raw materials using the
+latest cutting-edge technology.
+
+Laser mines lock onto passing
+asteroids and extract raw material
+from them, which can be collected
+and then stored to nearby
+structures.
+
+These structures require a high
+amount of energy, so building
+generators is recommended.
+
+The material it produces is
+commonly used in starbit
+production, though it could
+potentially be used to repair
+or assist with structures...
