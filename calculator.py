@@ -19,7 +19,8 @@ class Game:
         self.card_index: int = 0
         self.log: Panel = Panel(55)
         self.deck.log = self.log
-        self.enemy_spawn_rate = 0.05
+        self.enemy_spawn_rate: float = 0.05
+        self.menu: Menu = Menu.HOME
 
     def get_available_box(self) -> Box:
         available_box = Box()
@@ -87,17 +88,21 @@ class Game:
 
         for index, card in enumerate(self.deck.cards):
             if not card.is_enemy: continue
+            if card.is_destroyed(): continue
             core_index = self.deck.index_of(self.deck.get_core())
             if index < core_index:
                 direction = +1
             else:
                 direction = -1
             other = self.deck.cards[index + direction]
-            if other.destroyed and not other.is_core:
+            if other.is_destroyed() and not other.is_core:
                 self.swap(index, index + direction)
 
         if random.random() < self.enemy_spawn_rate:
             self.add_enemy()
+
+        if self.deck.get_core().is_destroyed():
+            print("CORE DESTROYED - GAME OVER!")
 
     def can_buy(self, price: Box) -> bool:
         return not self.get_available_box() < price
@@ -174,16 +179,37 @@ class Game:
 
     def display(self, menu: Menu) -> str:
         string: str = ""
-        in_shop: bool = menu == Menu.SHOP or menu == Menu.SHOP_CONFIRM
+        in_shop: bool = menu is Menu.SHOP or menu is Menu.SHOP_CONFIRM
         if in_shop and not self.build_direction:
             string += "+ Preview \n"
         for index, card in enumerate(self.deck.cards):
             selected = index == self.card_index
-            if selected:
-                string += "= "
+            # if selected:
+            #    string += "= "
+            # else:
+            #    string += "- "
+            if menu is Menu.SELL or menu is Menu.SELL_CONFIRM:
+                if (card.is_destroyed() or not card.is_enemy) and not card.is_core:
+                    value = str(card.sell_price().to_box())
+                elif card.is_enemy:
+                    value = "ENEMY"
+                else:
+                    value = "CORE"
+            elif menu is Menu.UPGRADE or menu is Menu.UPGRADE_CONFIRM:
+                if card.is_enemy:
+                    value = "ENEMY"
+                elif card.at_max_level():
+                    value = "MAX LEVEL"
+                elif not card.next_level_unlocked():
+                    value = "LOCKED"
+                else:
+                    value = str(card.next_stats().price)
             else:
-                string += "- "
-            string += card.display(selected, width=50).display() + '\n'
+                if selected or card.missing_health():
+                    value = card.health_bar()
+                else:
+                    value = ""
+            string += card.display(selected, width=48, name_value=value).display() + '\n'
             # string += str(card)
             # for line in card.display(selected).split("\n"):
             #    string += "    " + line + "\n"
@@ -191,11 +217,14 @@ class Game:
         if in_shop and self.build_direction:
             string += "+ Preview \n"
         string = string.rstrip()
+        self.menu = menu
         return string
 
     def add_enemy(self):
         enemy = self.deck.add_card(Template.ENEMY.value, random.choice([True, False]))
         self.card_index = enemy
+        enemy_card = self.deck.cards[enemy]
+        enemy_card.purchased = enemy_card.stats().price * 4
         self.log.write("An enemy has spawned in!")
 
 

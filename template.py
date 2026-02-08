@@ -7,7 +7,7 @@ from stuff import Box, Flow
 class Template(Enum):
     CORE = Card("Core", Box(health=1000, starbit=1000), [
         Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=200, boost=0),
-              Flow(energy=+6), price=Box(), unlocked=True, effect_range=1, effect_flow=Flow(health=+5))
+              Flow(energy=+6), price=Box(), unlocked=True, effect_range=1, effect_flow=Flow(health=+0))
     ], priority=0, is_interactable=False, is_core=True)
     GENERATOR = Card("Generator", Box(health=100), [
         Level(1, Box(health=100, shield=100), Flow(energy=12), Box(starbit=60), True),
@@ -35,7 +35,7 @@ class Template(Enum):
         Level(1, Box(health=120), Flow(energy=-20), Box(starbit=200), True, 2, Flow(health=-20)),
     ], 5)
     ENEMY = Card("Enemy", Box(health=60), [
-        Level(1, Box(health=60), Flow(), Box(), True, 1, effect_flow=Flow(health=-15)),
+        Level(1, Box(health=60), Flow(), Box(starbit=50), True, 1, effect_flow=Flow(health=-15)),
     ], 9, is_enemy=True, is_interactable=False)
     BOOST = Card("Boost", Box(health=48), [
         Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), False, 1, Flow(boost=+50)),

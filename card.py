@@ -1,5 +1,6 @@
 import copy
 
+from color import Color
 from display import Info
 from stuff import Box, Flow
 
@@ -211,7 +212,9 @@ class Card:
 
         return info
 
-    def sell_price(self) -> Box:
+    def sell_price(self) -> Flow:
+        if self.is_destroyed():
+            return self.purchased * 0.25
         return self.purchased * 0.75
 
     def at_max_level(self) -> bool:
@@ -219,7 +222,33 @@ class Card:
 
     def next_level_unlocked(self) -> bool:
         if self.at_max_level(): return False
-        return not self.next_stats().unlocked
+        return self.next_stats().unlocked
+
+    def health_bar(self) -> str:
+        step = 125 if self.is_core else 20
+        max_bars = self.stats().capacity.stuff[Box.Types.HEALTH.value] // step
+        hp = f"{Color.WHITE.value}["
+        if self.storage.stuff[Box.Types.SHIELD.value] > 0:
+            filled_bars = self.storage.stuff[Box.Types.SHIELD.value] // step
+            filled_color = Color.CYAN.value
+            unfilled_color = Color.GREEN.value
+        else:
+            filled_bars = self.storage.stuff[Box.Types.HEALTH.value] // step
+            filled_color = Color.GREEN.value
+            unfilled_color = Color.RED.value
+
+        unfilled_bars = max_bars - filled_bars
+
+        hp += unfilled_color
+        for i in range(unfilled_bars): hp += "|"
+        hp += filled_color
+        for i in range(filled_bars): hp += "|"
+        hp += f"{Color.WHITE.value}]"
+        return hp
+
+    def missing_health(self) -> bool:
+        return not self.storage.only(Box.Types.HEALTH) == self.stats().capacity.only(Box.Types.HEALTH)
+
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,

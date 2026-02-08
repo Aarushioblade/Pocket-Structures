@@ -33,7 +33,7 @@ def move(direction: int):
     elif menu is Menu.SELL:
         game.change_card_index(direction)
         card = game.deck.cards[game.card_index]
-        if card.is_interactable:
+        if card.is_interactable or card.is_destroyed():
             caption = f"SELL: Selling {card} for {card.sell_price()}"
         else:
             caption = f"SELL: This card cannot be sold"
@@ -42,7 +42,7 @@ def move(direction: int):
         card = game.deck.cards[game.card_index]
         if card.at_max_level():
             caption = f"UPGRADE: {card} cannot be levelled up any further"
-        elif card.next_level_unlocked():
+        elif not card.next_level_unlocked():
             caption = f"UPGRADE: {card} has not unlocked [LVL{card.level + 1}]"
         else:
             caption = f"UPGRADE: {card} -> [LVL{card.next_stats().level}] for {card.next_stats().price}"
@@ -79,7 +79,7 @@ def space():
 
         case Menu.SELL:
             card = game.deck.cards[game.card_index]
-            if card.is_interactable:
+            if card.is_interactable or card.is_destroyed():
                 set_menu(Menu.SELL_CONFIRM)
                 caption = f"CONFIRM: You are selling {card}"
             else:

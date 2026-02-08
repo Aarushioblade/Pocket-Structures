@@ -33,8 +33,8 @@ class Display:
         print(canvas)
 
     def fit_to_width(self, text: str, width: int) -> str:
-        if rl_len(text) > width:
-            return text[:width] + Color.WHITE.value
+        # if rl_len(text) > width:
+        #    return text[:width] + Color.WHITE.value
         for i in range(width - rl_len(text)):
             text += self.empty_char
         return text
