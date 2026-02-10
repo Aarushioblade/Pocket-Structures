@@ -213,6 +213,7 @@ class Card:
                 info.add(f"{name.capitalize()} ", f"{storage}/{capacity}", color)
             if effect: info.add(f"{name.capitalize()} effect ", f"{effect:+}", color)
         if self.stats().range: info.add("Range", f"{self.stats().range}", Color.WHITE)
+        if self.action: info.add("Status", self.action, Color.WHITE)
         return info
 
     def sell_price(self) -> Flow:

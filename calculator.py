@@ -18,6 +18,11 @@ from template import Template
 # Game over screen
 # Win screen
 # Fully upgradable card templates
+# more accurate health bars
+# known bug with researching everything
+
+def color_text(text: str, color: Color) -> str:
+    return f"{color.value}{text}{Color.WHITE.value}"
 
 class Game:
     def __init__(self, deck: Deck = None):
@@ -82,13 +87,16 @@ class Game:
                 if card.is_destroyed(): continue
                 if card.priority != priority: continue
                 if self.get_available_box() < card.inflow:
-                    card.action = "LACK RESOURCES"
+                    card.action = color_text("LACK RESOURCES", Color.RED)
                     continue
                 if card.requires_enemies:
                     if not self.enemies_in_range(card):
                         card.action = "IDLE"
                         continue
-                card.action = "ACTIVE"
+                if card.is_enemy:
+                    card.action = color_text("HOSTILE", Color.RED)
+                else:
+                    card.action = "ACTIVE"
                 self.collect_from_other_cards(card)
                 self.send_to_other_cards(card)
                 card.produce()
@@ -247,7 +255,9 @@ class Game:
 
     def enemies_in_range(self, card: Card) -> bool:
         for other in self.deck.in_range(card):
-            if other.is_enemy: return True
+            if other.is_enemy:
+                if not other.is_destroyed():
+                    return True
         return False
 
 

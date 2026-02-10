@@ -399,5 +399,7 @@ def on_release(key):
         pass
 
 
+print("Press any key to start the game ", end="")
+
 with kb.Listener(on_press=on_press, on_release=on_release) as listener:
     listener.join()
