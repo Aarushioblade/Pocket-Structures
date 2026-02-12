@@ -181,13 +181,15 @@ class LogPanel(Panel):
 
         for line in self.all_lines:
             filter_satisfied: bool = False
-            if line.count("Turn") or line.count("GAME"):
-                filter_satisfied = True
+            keywords: list[str] = ["turn", "constructed", "upgraded", "swapped", "game"]
+            for word in keywords:
+                if line.casefold().count(word) or line == "":
+                    filter_satisfied = True
 
             stuff_satisfied: bool = not self.stuff_fiter
             action_satisfied: bool = not self.action_filter
             for stuff in self.stuff_fiter:
-                if line.count(stuff.upper()):
+                if line.casefold().count(stuff.casefold()):
                     stuff_satisfied = True
             for action in self.action_filter:
                 if line.count(action.upper()):
@@ -198,6 +200,9 @@ class LogPanel(Panel):
 
             if filter_satisfied:
                 filtered_lines.append(line)
+
+        self.to_pages(filtered_lines)
+        return
 
         without_repeats: list[str] = []
 
@@ -224,7 +229,11 @@ class LogPanel(Panel):
         self.flip_page(0)
 
     def get_lines(self) -> list[str]:
-        new_lines: list[str] = copy.deepcopy(self.pages[self.page])
+        try:
+            new_lines: list[str] = copy.deepcopy(self.pages[self.page])
+        except IndexError:
+            print("INVALID PAGE")
+            return []
         new_lines.insert(0, "")
         stuff_filters: str = ""
         for stuff in Box.Types:

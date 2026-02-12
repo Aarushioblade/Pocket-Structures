@@ -6,7 +6,7 @@ from color import Color
 from deck import Deck
 from display import Info, LogPanel
 from menu import Menu
-from stuff import Box
+from stuff import Box, Flow
 from template import Template
 
 
@@ -35,6 +35,7 @@ class Game:
         self.log: LogPanel = LogPanel(55)
         self.deck.log = self.log
         self.enemy_spawn_rate: float = 0.05
+
         self.menu: Menu = Menu.HOME
 
     def get_available_box(self) -> Box:
@@ -76,7 +77,7 @@ class Game:
             card.bonus_send_to(target)
 
     def calculate(self) -> None:
-        self.log.write(f" - Turn {self.turn} - ")
+        self.log.write(f"\n>> TURN {self.turn}\n")
         self.turn += 1
 
         for card in self.deck.sorted_by_distance():
@@ -86,13 +87,20 @@ class Game:
             for card in self.deck.sorted_by_distance():
                 if card.is_destroyed(): continue
                 if card.priority != priority: continue
-                if self.get_available_box() < card.inflow:
-                    card.action = color_text("LACK RESOURCES", Color.RED)
-                    continue
                 if card.requires_enemies:
                     if not self.enemies_in_range(card):
                         card.action = "IDLE"
                         continue
+                if self.get_available_box() < card.inflow:
+                    card.action = color_text("LACK RESOURCES", Color.RED)
+                    # print out required
+                    required: Box = self.get_available_box() - card.inflow
+                    required: Flow = -required.to_flow().get_inflow()
+                    # self.log.write(f"{Color.RED}{card} lacks resources!{Color.WHITE}")
+                    for stuff in required.separate():
+                        self.log.write(f"{stuff.accent()} {card} requires {stuff.value()} {stuff.name()}")
+                    continue
+
                 if card.is_enemy:
                     card.action = color_text("HOSTILE", Color.RED)
                 else:
@@ -138,12 +146,14 @@ class Game:
         card.log = self.log
         self.collect_purchase_from_other_cards(card)
         self.card_index = self.deck.add_card(card, is_below=self.build_direction)
+        self.log.write(f"| Constructed {card}")
 
 
     def sell(self, index: int) -> None:
         card = self.deck.cards[index]
         sell_price: Box = card.sell_price()
-        self.log.write(f"SELL: {card} >> {sell_price}")
+        for stuff in sell_price.separate():
+            self.log.write(f"{stuff.accent()} {card} was sold for {stuff.value()} {stuff.name()}")
         card.storage += sell_price
         self.store_to_other_cards(card)
         del self.deck.cards[index]
@@ -170,9 +180,11 @@ class Game:
             raise Exception(f"Can't upgrade {card}!")
         card_value = card.purchased.to_flow()
         card.purchased = Box()
+        previous_card = str(card)
         card.level_up()
         self.collect_purchase_from_other_cards(card)
         card.purchased += card_value
+        self.log.write(f"| Upgraded {previous_card} to [LVL{card.level}]")
 
     def can_research(self, card: Card) -> bool:
         return not self.get_available_box() < card.stats().research_cost
@@ -181,22 +193,23 @@ class Game:
         if not self.can_research(card):
             raise Exception(f"Can't research {card.name}!")
         levelled_card = copy.deepcopy(card)
+        levelled_card.log = self.log
         self.collect_research_from_other_cards(levelled_card)
         card.stats().unlocked = True
-        self.log.write(f"RESEARCH: Unlocked level {card.stats().level} for {card.name}")
+        self.log.write(f"| {card.name} can now be upgraded to [LVL{card.stats().level}]")
 
     def swap(self, i: int, j: int) -> None:
         temp: Card = self.deck.cards[i]
         self.deck.cards[i] = self.deck.cards[j]
         self.deck.cards[j] = temp
-        self.log.write(f"SWAP: {self.deck.cards[j]} <-> {self.deck.cards[i]}")
+        self.log.write(f"| Swapped {self.deck.cards[j]} with {self.deck.cards[i]}")
 
     def change_card_index(self, amount: int) -> None:
         self.card_index += amount
         if self.card_index not in range(len(self.deck.cards)):
             # print(f"FOCUS: {self.card_index} is invalid")
             self.card_index -= amount
-        card = self.deck.cards[self.card_index]
+        #card = self.deck.cards[self.card_index]
         # print(f"FOCUS: {self.card_index} ({card.name} LVL{card.level})")
 
     def set_build_direction(self, direction: bool) -> None:

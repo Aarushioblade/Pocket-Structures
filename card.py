@@ -43,6 +43,8 @@ class Card:
 
     def __str__(self) -> str:
         # return self.name
+        if self.level == 1:
+            return f"{"Destroyed " if self.destroyed else ""}{self.name}"
         return f"[LVL{self.level}] {"Destroyed " if self.destroyed else ""}{self.name}"
 
     def __repr__(self) -> str:
@@ -93,7 +95,9 @@ class Card:
     def produce(self) -> None:
         self.storage += self.outflow
         if self.outflow == Flow(): return
-        self.write(f"PRODUCE: {self.name} >> {self.outflow}")
+        # self.write(f"{self.name} produced {self.outflow}")
+        for stuff in self.outflow.separate():
+            self.write(f"{stuff.accent()} {self} produced {stuff.value()} {stuff.name()}")
 
     def is_destroyed(self):
         if self.destroyed: return True
@@ -108,7 +112,7 @@ class Card:
         self.storage -= excess
         # self.write(f"RESET: {self.name} -> {excess} -> Void")
         if self.is_destroyed():
-            self.write(f"RESET: {self.name} destroyed!")
+            self.write(f"{Color.RED}{self.name} destroyed!{Color.WHITE}")
 
     def reset_status(self):
         self.charge = Box()
@@ -128,7 +132,16 @@ class Card:
         if transfer == Flow(): return
         other.storage -= transfer
         self.charge += transfer
-        self.write(f"COLLECT: {self.name} <- {transfer} <- {other.name}")
+        # self.write(f"{self.name} received {transfer} from {other.name} (X/X)")
+        for stuff in transfer.separate():
+            if stuff.type is None: continue
+            inflow = self.stats().flow.get_inflow().stuff[stuff.type.value]
+            charge = self.charge.stuff[stuff.type.value]
+            if charge < inflow:
+                progress = f"{stuff.color()}({charge}/{inflow}){Color.WHITE}"
+            else:
+                progress = ""
+            self.write(f"{stuff.accent()} {self} received {stuff.value()} {stuff.name()} from {other} {progress}")
 
     def collect_purchase(self, other: Card) -> None:
         required: Flow = self.stats().price.to_flow() - self.purchased
@@ -137,17 +150,27 @@ class Card:
         other.storage -= transfer
         self.purchased += transfer
         if self.level == 1:
-            self.write(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
+            # self.write(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
+            # spent x to build
+            for stuff in transfer.separate():
+                self.write(f"{stuff.accent()} {other} contributed {stuff.value()} {stuff.name()} to build {self}")
         else:
-            self.write(f"UPGRADE: {self.name} <- {transfer} <- {other.name}")
+            # self.write(f"UPGRADE: {self.name} <- {transfer} <- {other.name}")
+            # spent x to upgrade
+            for stuff in transfer.separate():
+                self.write(f"{stuff.accent()} {other} contributed {stuff.value()} {stuff.name()} to upgrade {self}")
 
-    def collect_research(self, other):
+    def collect_research(self, other: Card):
         required: Flow = self.stats().research_cost.to_flow() - self.stats().researched
         transfer: Flow = other.storage % required.to_flow()
         if transfer == Flow(): return
         other.storage -= transfer
         self.stats().researched += transfer
-        self.write(f"RESEARCH: {self.name} <- {transfer} <- {other.name}")
+        # self.write(f"RESEARCH: {self.name} <- {transfer} <- {other.name}")
+        # spent x to research
+
+        for stuff in transfer.separate():
+            self.write(f"{stuff.accent()} {other} contributed {stuff.value()} {stuff.name()} to research {self}")
 
     def get_storage_transfer(self, other: Card) -> Flow:
         maximum_to_receive: Box = other.stats().capacity - other.storage.to_flow()
@@ -161,6 +184,8 @@ class Card:
         self.storage -= transfer
         other.storage += transfer
         #self.write(f"STORE: {self.name} -> {transfer} -> {other.name}")
+        for stuff in transfer.separate():
+            self.write(f"{stuff.accent()} {other} stored {stuff.value()} {stuff.name()} from {self}")
 
     def send_to(self, other: Card) -> None:
         flow = self.stats().effect_flow
@@ -173,28 +198,35 @@ class Card:
         if flow == Flow(): return
         if not flow.only(Box.Types.SHIELD) == Flow():
             other.is_shielded = True
-        self.write(f"SEND: {self.name} -> {flow} -> {other.name}")
+        for stuff in flow.separate():
+            self.write(f"{stuff.accent()} {self} sent {stuff.value()} {stuff.name()} to {other}")
 
     def is_charged(self) -> bool:
         return self.charge == self.inflow
 
     def bonus_produce(self) -> None:
         if not self.is_charged(): return
-        bonus_flow: Flow = self.outflow.without(Box.Types.BOOST).boosted(self.storage.stuff[Box.Types.BOOST.value])
+        boost: int = self.storage.stuff[Box.Types.BOOST.value]
+        bonus_flow: Flow = self.outflow.without(Box.Types.BOOST).boosted(boost)
         if bonus_flow == Flow(): return
         self.storage += bonus_flow
-        self.write(f"BONUS: {self.name} >> {bonus_flow}")
+        # self.write(f"{self.name} produced {bonus_flow} extra ")
+        for stuff in self.outflow.separate():
+            self.write(f"{stuff.accent()} {self} produced {stuff.value()} extra {stuff.name()} ({boost})")
 
     def bonus_send_to(self, other: Card) -> None:
         if not self.is_charged(): return
-        flow = self.stats().effect_flow.without(Box.Types.BOOST).boosted(self.storage.stuff[Box.Types.BOOST.value])
+        boost: int = self.storage.stuff[Box.Types.BOOST.value]
+        flow = self.stats().effect_flow.without(Box.Types.BOOST).boosted(boost)
         if self.is_enemy == other.is_enemy:
             flow = flow.get_outflow()
         else:
             flow = -flow.get_inflow()
         if flow == Flow(): return
         other.storage += flow
-        self.write(f"BONUS SEND: {self.name} -> {flow} -> {other.name}")
+        # self.write(f"{self.name} sent {flow} extra {flow.name()} to {other.name}")
+        for stuff in flow.separate():
+            self.write(f"{stuff.accent()} {self} sent {stuff.value()} extra {stuff.name()} to {other} ({boost})")
 
     def display(self, selected: bool = False, include_name: bool = True, width: int = 30, name_value: str = "") -> Info:
         info = Info(width)

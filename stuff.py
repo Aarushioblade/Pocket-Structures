@@ -67,6 +67,7 @@ class Box:
         self.stuff[Box.Types.STARBIT.value] = starbit
         self.stuff[Box.Types.SHIELD.value] = shield
         self.stuff[Box.Types.BOOST.value] = boost
+        self.type: Box.Types | None = None
 
     def __copy__(self) -> Box:
         return Box(packed=self.stuff)
@@ -135,6 +136,32 @@ class Box:
         for i in range(len(self.stuff)):
             new_flow.append(-self.stuff[i])
         return Flow(packed=new_flow)
+
+    def separate(self) -> list[Flow]:
+        flows: list[Flow] = []
+        for i, v in enumerate(Box.Types):
+            new_flow: Flow = self.only(v)
+            new_flow.type = v
+            if new_flow != Flow():
+                flows.append(new_flow)
+        return flows
+
+    def color(self) -> Color:
+        if self.type is None: return Color.WHITE
+        if self.stuff[self.type.value] < 0: return Color.RED
+        return self.colors[self.type]
+
+    def name(self) -> str:
+        if self.type is None: return str(self)
+        return self.type.name.lower()
+
+    def value(self) -> str:
+        if self.type is None: return str(self)
+        value = self.stuff[self.type.value]
+        return f"{self.color()}{abs(value)}{Color.WHITE}"
+
+    def accent(self) -> str:
+        return f"{self.color()}|{Color.WHITE}"
 
     def only(self, *types: Box.Types) -> Flow:
         new_stuff: list[int] = []

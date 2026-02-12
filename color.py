@@ -18,3 +18,6 @@ class Color(Enum):
 
     def __add__(self, other: str) -> str:
         return str(self.value) + other
+
+    def __str__(self) -> str:
+        return self.value
