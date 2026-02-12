@@ -5,7 +5,7 @@ from stuff import Box, Flow
 
 
 class Template(Enum):
-    CORE = Card("Core", Box(health=1000, starbit=1000), [
+    CORE = Card("Core", Box(health=1000, starbit=10000), [
         Level(1, Box(health=1000, material=30, energy=60, starbit=15000, shield=200, boost=0),
               Flow(energy=+6), price=Box(), unlocked=True, effect_range=0, effect_flow=Flow(health=+0))
     ], priority=0, is_interactable=False, is_core=True)
@@ -37,7 +37,7 @@ class Template(Enum):
     ENEMY = Card("Enemy", Box(health=60), [
         Level(1, Box(health=60), Flow(), Box(starbit=50), True, 1, effect_flow=Flow(health=-15)),
     ], 9, is_enemy=True, is_interactable=False)
-    BOOST = Card("Booster", Box(health=48), [
+    BOOST = Card("Overloader", Box(health=48), [
         Level(1, Box(health=48), Flow(energy=-20, material=-5), Box(starbit=400), False, 1, Flow(boost=+50),
               research_cost=Box(starbit=900)),
     ], 8)

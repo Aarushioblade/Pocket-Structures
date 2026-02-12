@@ -11,10 +11,7 @@ from template import Template
 
 
 # TODO:
-# More readable log sheet
 # Increases in enemy difficulty
-# Shows card status
-# Shows card range / effect
 # Game over screen
 # Win screen
 # Fully upgradable card templates
@@ -77,8 +74,6 @@ class Game:
             card.bonus_send_to(target)
 
     def calculate(self) -> None:
-        self.log.write(f"\n>> TURN {self.turn}\n")
-        self.turn += 1
 
         for card in self.deck.sorted_by_distance():
             card.reset_status()
@@ -136,6 +131,9 @@ class Game:
 
         if self.deck.get_core().is_destroyed():
             self.log.write(f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER!{Color.WHITE.value}")
+
+        self.log.write(f"\n>> TURN {self.turn}\n")
+        self.turn += 1
 
     def can_buy(self, price: Box) -> bool:
         return not self.get_available_box() < price
@@ -196,7 +194,10 @@ class Game:
         levelled_card.log = self.log
         self.collect_research_from_other_cards(levelled_card)
         card.stats().unlocked = True
-        self.log.write(f"| {card.name} can now be upgraded to [LVL{card.stats().level}]")
+        if card.stats().level == 1:
+            self.log.write(f"| {card.name} can now be constructed!")
+        else:
+            self.log.write(f"| {card.name} can now be upgraded to [LVL{card.stats().level}]")
 
     def swap(self, i: int, j: int) -> None:
         temp: Card = self.deck.cards[i]
@@ -221,12 +222,10 @@ class Game:
         in_shop: bool = menu is Menu.SHOP or menu is Menu.SHOP_CONFIRM
         if in_shop and not self.build_direction:
             string += "+ Preview \n"
+        selected_card: Card = self.deck.cards[self.card_index]
+        cards_in_range: list[Card] = self.deck.in_range(selected_card)
         for index, card in enumerate(self.deck.cards):
             selected = index == self.card_index
-            # if selected:
-            #    string += "= "
-            # else:
-            #    string += "- "
             if menu is Menu.SELL or menu is Menu.SELL_CONFIRM:
                 if (card.is_destroyed() or not card.is_enemy) and not card.is_core:
                     value = str(card.sell_price().to_box())
@@ -248,7 +247,17 @@ class Game:
                     value = card.health_bar()
                 else:
                     value = ""
-            string += card.display(selected, width=48, name_value=value).display() + '\n'
+            prefix: str = "- "
+            if selected: prefix = "= "
+            if card.is_destroyed():
+                prefix = color_text(prefix, Color.GRAY)
+            if card.is_enemy or card.action.count(Color.RED.value):
+                prefix = color_text(prefix, Color.RED)
+            elif card in cards_in_range:
+                for stuff in selected_card.stats().effect_flow.separate():
+                    prefix = color_text(prefix, stuff.color())
+
+            string += card.display(selected, width=48, name_value=value).display(prefix) + '\n'
             # string += str(card)
             # for line in card.display(selected).split("\n"):
             #    string += "    " + line + "\n"
@@ -264,7 +273,7 @@ class Game:
         self.card_index = enemy
         enemy_card = self.deck.cards[enemy]
         enemy_card.purchased = enemy_card.stats().price * 4
-        self.log.write(f"{Color.RED.value}GAME: {enemy_card} has entered the base! {Color.WHITE.value}")
+        self.log.write(f"{Color.RED.value}{enemy_card} has entered the base! {Color.WHITE.value}")
 
     def enemies_in_range(self, card: Card) -> bool:
         for other in self.deck.in_range(card):

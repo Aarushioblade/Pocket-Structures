@@ -92,13 +92,14 @@ class Panel:
 
 
 class Info:
-    def __init__(self, width: int = 15):
+    def __init__(self, width: int = 15, prefix: str = ""):
         self.name: str = ""
         self.lines: list[str] = []
         self.colors: list[Color | None] = []
         self.values: list[str] = []
         self.width: int = width
         self.color = Color.WHITE
+        self.prefix_default: str = prefix
 
     def add(self, text: str, value: str, color: Color | None = None):
         self.lines.append(text)
@@ -106,13 +107,22 @@ class Info:
         self.values.append(value)
 
     def __str__(self) -> str:
+        return self.display()
+
+    def display(self, prefix: str | None = None):
         string: str = '\n'
         for text, color, value in zip(self.lines, self.colors, self.values):
             current_width = rl_len(text) + rl_len(value)
             if "-" in value: color = Color.RED
             if color is not None:
                 current_width += 5
+                string += " " * rl_len(self.prefix_default)
                 string += f"{color.value}|    {self.color.value}"
+            else:
+                if prefix:
+                    string += prefix
+                else:
+                    string += self.prefix_default
             string += f"{text}"
             if current_width < self.width:
                 string += " " * (self.width - current_width)
@@ -123,8 +133,8 @@ class Info:
             string += '\n'
         return string.strip()
 
-    def display(self):
-        return str(self)
+    def add_margin(self, width: int):
+        pass
 
     def extend(self, other: Info):
         self.lines.extend(other.lines)
@@ -181,7 +191,7 @@ class LogPanel(Panel):
 
         for line in self.all_lines:
             filter_satisfied: bool = False
-            keywords: list[str] = ["turn", "constructed", "upgraded", "swapped", "game"]
+            keywords: list[str] = ["turn", "constructed", "upgraded", "swapped", "entered"]
             for word in keywords:
                 if line.casefold().count(word) or line == "":
                     filter_satisfied = True
@@ -236,7 +246,8 @@ class LogPanel(Panel):
             return []
         new_lines.insert(0, "")
         stuff_filters: str = ""
-        for stuff in Box.Types:
+        for i in range(len(Box.Types)):
+            stuff = Box.Types(i)
             if stuff.name.upper() in self.stuff_fiter:
                 stuff_filters += Box.colors[stuff]
             else:

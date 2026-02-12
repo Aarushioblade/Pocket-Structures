@@ -137,6 +137,9 @@ class Box:
             new_flow.append(-self.stuff[i])
         return Flow(packed=new_flow)
 
+    def type_of(self, stuff: Box.Types):
+        return self.stuff[stuff.value]
+
     def separate(self) -> list[Flow]:
         flows: list[Flow] = []
         for i, v in enumerate(Box.Types):

@@ -43,9 +43,9 @@ class Card:
 
     def __str__(self) -> str:
         # return self.name
-        if self.level == 1:
-            return f"{"Destroyed " if self.destroyed else ""}{self.name}"
-        return f"[LVL{self.level}] {"Destroyed " if self.destroyed else ""}{self.name}"
+        string: str = f"{"Destroyed " if self.destroyed else ""}{self.name}"
+        if self.level > 1: string += f" [LVL{self.level}]"
+        return string
 
     def __repr__(self) -> str:
         return f"{self.name} ({self.id})"
@@ -229,7 +229,7 @@ class Card:
             self.write(f"{stuff.accent()} {self} sent {stuff.value()} extra {stuff.name()} to {other} ({boost})")
 
     def display(self, selected: bool = False, include_name: bool = True, width: int = 30, name_value: str = "") -> Info:
-        info = Info(width)
+        info = Info(width, prefix="- ")
         if include_name: info.add(str(self), name_value)
         if not selected: return info
         for i in range(len(Box.Types)):

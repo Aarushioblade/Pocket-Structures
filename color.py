@@ -12,6 +12,7 @@ class Color(Enum):
     WHITE = color.RESET
     ULTRA_WHITE = color.LIGHTWHITE_EX
     BLACK = color.LIGHTBLACK_EX
+    GRAY = color.WHITE
 
     def __radd__(self, other: str) -> str:
         return other + str(self.value)

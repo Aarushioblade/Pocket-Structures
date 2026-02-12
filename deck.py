@@ -72,6 +72,7 @@ class Deck:
             return None
 
     def in_range(self, other: Card) -> list[Card]:
+        if other.is_destroyed(): return [other]
         max_distance = other.stats().range
         cards_in_range: list[Card] = []
         sorted_deck = self.cards  # self.sorted_by_distance(other)
