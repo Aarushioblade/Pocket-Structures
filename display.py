@@ -189,38 +189,30 @@ class LogPanel(Panel):
     def filter(self):
         filtered_lines: list[str] = []
 
+        counter: int = 0
         for line in self.all_lines:
+            if counter > 1000: break
             filter_satisfied: bool = False
             keywords: list[str] = ["turn", "constructed", "upgraded", "swapped", "entered"]
             for word in keywords:
-                if line.casefold().count(word) or line == "":
+                if line.lower().count(word) or line == "":
                     filter_satisfied = True
+            if not self.stuff_fiter: filter_satisfied = True
 
-            stuff_satisfied: bool = not self.stuff_fiter
-            action_satisfied: bool = not self.action_filter
-            for stuff in self.stuff_fiter:
-                if line.count(stuff.casefold()):
-                    stuff_satisfied = True
-            for action in self.action_filter:
-                if line.count(action.upper()):
-                    action_satisfied = True
-
-            if stuff_satisfied and action_satisfied:
-                filter_satisfied = True
+            if not filter_satisfied:
+                stuff_satisfied: bool = False
+                for stuff in self.stuff_fiter:
+                    if line.count(stuff.casefold()):
+                        stuff_satisfied = True
+                if stuff_satisfied:
+                    filter_satisfied = True
 
             if filter_satisfied:
                 filtered_lines.append(line)
+            counter += 1
 
         self.to_pages(filtered_lines)
         return
-
-        without_repeats: list[str] = []
-
-        for i in range(len(filtered_lines) - 1):
-            if filtered_lines[i + 1].count("Turn") and filtered_lines[i].count("Turn"): continue
-            without_repeats.append(filtered_lines[i])
-        if not filtered_lines[-1].count("Turn"): without_repeats.append(filtered_lines[-1])
-        self.to_pages(without_repeats)
 
     def flip_page(self, amount: int):
         self.page += amount

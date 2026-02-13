@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 
 from card import Card
@@ -11,9 +12,6 @@ from template import Template
 
 
 # TODO:
-# Increases in enemy difficulty
-# Game over screen
-# Win screen
 # Fully upgradable card templates
 # more accurate health bars
 # known bug with researching everything
@@ -34,6 +32,14 @@ class Game:
         self.enemy_spawn_rate: float = 0.00
 
         self.menu: Menu = Menu.HOME
+
+    def enemy_threat(self) -> float:
+        maximum_chance = 15
+        k = math.log(maximum_chance, math.e) / 10000
+        x = self.get_available_box().type_of(Box.Types.STARBIT)
+        x += (self.deck.get_core().level - 1) * 100
+        chance = math.exp(k * (x - 5000))
+        return chance / 100
 
     def get_available_box(self) -> Box:
         available_box = Box()
@@ -73,7 +79,7 @@ class Game:
             if target.is_destroyed(): continue
             card.bonus_send_to(target)
 
-    def calculate(self) -> None:
+    def calculate(self) -> None | str:
 
         for card in self.deck.sorted_by_distance():
             card.reset_status()
@@ -126,14 +132,24 @@ class Game:
             if other.is_destroyed() and not other.is_core:
                 self.swap(index, index + direction)
 
+        self.enemy_spawn_rate = self.enemy_threat()
         if random.random() < self.enemy_spawn_rate:
             self.add_enemy()
 
         if self.deck.get_core().is_destroyed():
-            self.log.write(f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER!{Color.WHITE.value}")
+            game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER!{Color.WHITE.value}"
+            # self.log.write(game_over_message)
+            return game_over_message
+
+        for card in self.deck.cards:
+            if card.name == "ULTIMATE MEGASTRUCTURE":
+                win_message = f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE AND WON THE GAME!{Color.WHITE.value}"
+                # self.log.write(win_message)
+                return win_message
 
         self.log.write(f"\n>> TURN {self.turn}\n")
         self.turn += 1
+        return None
 
     def can_buy(self, price: Box) -> bool:
         return not self.get_available_box() < price
@@ -183,6 +199,10 @@ class Game:
         self.collect_purchase_from_other_cards(card)
         card.purchased += card_value
         self.log.write(f"| Upgraded {previous_card} to [LVL{card.level}]")
+
+    def upgrade_enemy(self, index: int) -> None:
+        card = self.deck.cards[index]
+        card.level_up()
 
     def can_research(self, card: Card) -> bool:
         return not self.get_available_box() < card.stats().research_cost
@@ -273,6 +293,14 @@ class Game:
         self.card_index = enemy
         enemy_card = self.deck.cards[enemy]
         enemy_card.purchased = enemy_card.stats().price * 4
+        upgrade_chance = 3.5 * self.enemy_threat()
+        for i in range(len(enemy_card.levels)):
+            if random.random() < upgrade_chance:
+                self.upgrade_enemy(self.card_index)
+            else:
+                break
+        enemy_card.storage += enemy_card.stats().capacity.only(Box.Types.HEALTH) - enemy_card.storage.only(
+            Box.Types.HEALTH)
         self.log.write(f"{Color.RED.value}{enemy_card} has entered the base! {Color.WHITE.value}")
 
     def enemies_in_range(self, card: Card) -> bool:

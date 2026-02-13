@@ -249,6 +249,8 @@ class Card:
         return info
 
     def sell_price(self) -> Flow:
+        if self.is_enemy:
+            return self.stats().price.to_flow()
         if self.is_destroyed():
             return self.purchased * 0.25
         return self.purchased * 0.75

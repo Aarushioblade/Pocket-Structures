@@ -22,6 +22,7 @@ structure_to_swap: Card | None = None
 shift_held: bool = False
 game_started: bool = False
 caption: str = ""
+game_complete: bool = False
 
 info_panel.load("intro")
 shop_panel.hide()
@@ -104,13 +105,17 @@ def switch_direction(direction: int):
         game.log.flip_page(direction)
 
 
+message: str | None = None
+
 def exit_menu():
     set_menu(menu.HOME)
     global structure_to_swap
     structure_to_swap = None
     shop_panel.clear()
     shop_panel.hide()
-    game.calculate()
+    global message
+    if not game_complete:
+        message = game.calculate()
     global caption
     caption = ""
 
@@ -309,6 +314,11 @@ def show_key_actions():
 
             string += "TAB/DELETE] Home "
     print(string, end="")
+    global message
+    if message is not None:
+        global game_complete
+        game_complete = True
+        print('\n', message, end="")
 
 
 keybinds = {

@@ -1,1 +1,2 @@
-Launches projectiles at enemies
+Launches projectiles at enemies,
+dealing damage to them.
