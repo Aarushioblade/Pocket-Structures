@@ -199,7 +199,7 @@ class LogPanel(Panel):
             stuff_satisfied: bool = not self.stuff_fiter
             action_satisfied: bool = not self.action_filter
             for stuff in self.stuff_fiter:
-                if line.casefold().count(stuff.casefold()):
+                if line.count(stuff.casefold()):
                     stuff_satisfied = True
             for action in self.action_filter:
                 if line.count(action.upper()):

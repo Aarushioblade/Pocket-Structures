@@ -179,7 +179,7 @@ class Card:
 
     def store(self, other: Card) -> None:
         if other.is_enemy: return
-        transfer: Flow = self.get_storage_transfer(other).without(Box.Types.HEALTH, Box.Types.SHIELD, Box.Types.BOOST)
+        transfer: Flow = self.get_storage_transfer(other).without(Box.Types.SHIELD, Box.Types.BOOST)
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
@@ -261,7 +261,7 @@ class Card:
         return self.next_stats().unlocked
 
     def health_bar(self) -> str:
-        step = 125 if self.is_core else 20
+        step = 50 if self.is_core else 10
         max_bars = self.stats().capacity.stuff[Box.Types.HEALTH.value] // step
         hp = f"{Color.WHITE.value}["
         if self.storage.stuff[Box.Types.SHIELD.value] > 0:

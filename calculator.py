@@ -31,7 +31,7 @@ class Game:
         self.card_index: int = 0
         self.log: LogPanel = LogPanel(55)
         self.deck.log = self.log
-        self.enemy_spawn_rate: float = 0.05
+        self.enemy_spawn_rate: float = 0.00
 
         self.menu: Menu = Menu.HOME
 

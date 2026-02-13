@@ -20,6 +20,7 @@ info_panel = InfoPanel(35)
 display.add(info_panel, home_panel, shop_panel, game.log)
 structure_to_swap: Card | None = None
 shift_held: bool = False
+game_started: bool = False
 caption: str = ""
 
 info_panel.load("intro")
@@ -150,9 +151,9 @@ def space():
             card = research.selected_card()
             if game.can_research(card):
                 set_menu(Menu.RESEARCH_CONFIRM)
-                caption = f"RESEARCH: You are researching level {card.stats().level} for {card}"
+                caption = f"RESEARCH: You are researching {card}"
             else:
-                caption = f"RESEARCH: Cannot research {card.name}"
+                caption = f"RESEARCH: Cannot research {card}"
             shop_panel.set(caption)
 
         case Menu.RESEARCH_CONFIRM:
@@ -335,6 +336,10 @@ def change_filter(stuff: Box.Types):
 
 
 def on_press(key):
+    global game_started
+    if not game_started:
+        game_started = True
+        key = kb.Key.enter
     global menu
     try:
         key = key.char
