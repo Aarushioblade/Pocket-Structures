@@ -12,11 +12,6 @@ from card import Card, Level
 
 
 # TODO:
-# research progression
-# linear enemy spawn chance progression
-# shield affects all structures
-# boosters, shields, and regenerators have levels
-# core can be upgraded
 # production summary
 
 def color_text(text: str, color: Color) -> str:
