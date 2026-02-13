@@ -1,4 +1,5 @@
 from pynput import keyboard as kb
+import time
 from calculator import Game, Shop, Research
 from card import Card
 from menu import Menu
@@ -153,6 +154,10 @@ def space():
             exit_menu()
 
         case Menu.RESEARCH:
+            if research.completed():
+                caption = f"RESEARCH: You have completed all available research!"
+                shop_panel.set(caption)
+                return
             card = research.selected_card()
             if game.can_research(card):
                 set_menu(Menu.RESEARCH_CONFIRM)

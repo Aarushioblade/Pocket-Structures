@@ -1,23 +1,33 @@
 import copy
-import math
 import random
+import time
 
-from card import Card
 from color import Color
 from deck import Deck
 from display import Info, LogPanel
 from menu import Menu
 from stuff import Box, Flow
 from template import Template
+from card import Card, Level
 
 
 # TODO:
-# Fully upgradable card templates
-# more accurate health bars
-# known bug with researching everything
+# research progression
+# linear enemy spawn chance progression
+# shield affects all structures
+# boosters, shields, and regenerators have levels
+# core can be upgraded
+# production summary
 
 def color_text(text: str, color: Color) -> str:
     return f"{color.value}{text}{Color.WHITE.value}"
+
+
+start_time = time.time()
+
+
+def get_time():
+    return time.time() - start_time
 
 class Game:
     def __init__(self, deck: Deck = None):
@@ -34,12 +44,13 @@ class Game:
         self.menu: Menu = Menu.HOME
 
     def enemy_threat(self) -> float:
-        maximum_chance = 15
-        k = math.log(maximum_chance, math.e) / 10000
+        maximum_chance = 0.25
+        minimum_chance = 0.05
+        m = (maximum_chance - minimum_chance) / 15000
         x = self.get_available_box().type_of(Box.Types.STARBIT)
         x += (self.deck.get_core().level - 1) * 100
-        chance = math.exp(k * (x - 5000))
-        return chance / 100
+        chance = m * x + minimum_chance
+        return chance
 
     def get_available_box(self) -> Box:
         available_box = Box()
@@ -137,13 +148,13 @@ class Game:
             self.add_enemy()
 
         if self.deck.get_core().is_destroyed():
-            game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER!{Color.WHITE.value}"
+            game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER! Time - {get_time()}{Color.WHITE.value}"
             # self.log.write(game_over_message)
             return game_over_message
 
         for card in self.deck.cards:
             if card.name == "ULTIMATE MEGASTRUCTURE":
-                win_message = f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE AND WON THE GAME!{Color.WHITE.value}"
+                win_message = f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE AND WON THE GAME! Time - {get_time()}{Color.WHITE.value}"
                 # self.log.write(win_message)
                 return win_message
 
@@ -293,7 +304,7 @@ class Game:
         self.card_index = enemy
         enemy_card = self.deck.cards[enemy]
         enemy_card.purchased = enemy_card.stats().price * 4
-        upgrade_chance = 3.5 * self.enemy_threat()
+        upgrade_chance = 1.0 * self.enemy_threat()
         for i in range(len(enemy_card.levels)):
             if random.random() < upgrade_chance:
                 self.upgrade_enemy(self.card_index)
@@ -325,6 +336,13 @@ class Shop:
             self.inventory.append(card.value)
         self.index = 0
 
+    @staticmethod
+    def meets_precondition(level: Level) -> bool:
+        if not level.precondition: return True
+        for required_card, required_level in level.precondition:
+            if not required_card.levels[required_level - 1].unlocked: return False
+        return True
+
     def change_index(self, index: int) -> str:
         self.index += index
         if self.index not in range(len(self.inventory)):
@@ -354,11 +372,16 @@ class Research(Shop):
             if not card.value.is_interactable: continue
             for level in card.value.levels:
                 if level.unlocked: continue
+                if not self.meets_precondition(level): break
                 levelled_card = copy.deepcopy(card.value)
                 levelled_card.level = level.level
                 self.inventory.append(levelled_card)
                 break
         self.index = 0
+
+    def completed(self) -> bool:
+        self.update()
+        return len(self.inventory) == 0
 
     def display(self) -> str:
         info = Info(50)

@@ -10,4 +10,4 @@ this, they can be an extremely
 powerful structure if used
 strategically. Their boosting
 effect stacks, and can even affect
-other overloaders!
+other boosters!

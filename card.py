@@ -179,7 +179,7 @@ class Card:
 
     def store(self, other: Card) -> None:
         if other.is_enemy: return
-        transfer: Flow = self.get_storage_transfer(other).without(Box.Types.SHIELD, Box.Types.BOOST)
+        transfer: Flow = self.get_storage_transfer(other).without(Box.Types.HEALTH, Box.Types.SHIELD, Box.Types.BOOST)
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
@@ -211,22 +211,22 @@ class Card:
         if bonus_flow == Flow(): return
         self.storage += bonus_flow
         # self.write(f"{self.name} produced {bonus_flow} extra ")
-        for stuff in self.outflow.separate():
-            self.write(f"{stuff.accent()} {self} produced {stuff.value()} extra {stuff.name()} ({boost})")
+        for stuff in bonus_flow.separate():
+            self.write(f"{stuff.accent()} {self} produced {stuff.value()} extra {stuff.name()}")
 
     def bonus_send_to(self, other: Card) -> None:
         if not self.is_charged(): return
         boost: int = self.storage.stuff[Box.Types.BOOST.value]
-        flow = self.stats().effect_flow.without(Box.Types.BOOST).boosted(boost)
+        bonus_flow = self.stats().effect_flow.without(Box.Types.BOOST).boosted(boost)
         if self.is_enemy == other.is_enemy:
-            flow = flow.get_outflow()
+            bonus_flow = bonus_flow.get_outflow()
         else:
-            flow = -flow.get_inflow()
-        if flow == Flow(): return
-        other.storage += flow
+            bonus_flow = -bonus_flow.get_inflow()
+        if bonus_flow == Flow(): return
+        other.storage += bonus_flow
         # self.write(f"{self.name} sent {flow} extra {flow.name()} to {other.name}")
-        for stuff in flow.separate():
-            self.write(f"{stuff.accent()} {self} sent {stuff.value()} extra {stuff.name()} to {other} ({boost})")
+        for stuff in bonus_flow.separate():
+            self.write(f"{stuff.accent()} {self} sent {stuff.value()} extra {stuff.name()} to {other}")
 
     def display(self, selected: bool = False, include_name: bool = True, width: int = 30, name_value: str = "") -> Info:
         info = Info(width, prefix="- ")
@@ -290,7 +290,8 @@ class Card:
 
 class Level:
     def __init__(self, level: int, capacity: Box, flow: Flow, price: Box, unlocked: bool = False,
-                 effect_range: int = 0, effect_flow: Flow = None, research_cost: Box = None):
+                 effect_range: int = 0, effect_flow: Flow = None, research_cost: Box = None,
+                 precondition: list[tuple] = None):
         self.level = level
         self.price: Box = price
         self.capacity: Box = capacity
@@ -302,6 +303,7 @@ class Level:
         if not research_cost: research_cost: Box = Box()
         self.research_cost: Box = research_cost
         self.researched: Box = Box()
+        self.precondition: list[tuple] | None = precondition
 
     def __str__(self) -> str:
         string: str = ""
