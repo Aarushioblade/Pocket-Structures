@@ -9,6 +9,7 @@ from menu import Menu
 from stuff import Box, Flow
 from template import Template
 from card import Card, Level
+from tracker import Tracker
 
 
 # TODO:
@@ -32,8 +33,10 @@ class Game:
         self.deck: Deck = deck
         self.turn = 1
         self.card_index: int = 0
-        self.log: LogPanel = LogPanel(55)
+        self.log: LogPanel = LogPanel(56)
         self.deck.log = self.log
+        self.tracker: Tracker = Tracker()
+        self.deck.tracker = self.tracker
         self.enemy_spawn_rate: float = 0.00
 
         self.menu: Menu = Menu.HOME
@@ -50,9 +53,23 @@ class Game:
     def get_available_box(self) -> Box:
         available_box = Box()
         for card in self.deck.sorted_by_distance():
-            if card.is_destroyed(): continue
+            if card.is_destroyed() or card.is_enemy: continue
             available_box += card.storage.to_flow()
         return available_box
+
+    def get_demand(self) -> Box:
+        demand = Box()
+        for card in self.deck.sorted_by_distance():
+            if card.is_destroyed() or card.is_enemy: continue
+            demand += card.stats().flow.get_inflow()
+        return demand
+
+    def get_potential(self) -> Box:
+        potential = Box()
+        for card in self.deck.sorted_by_distance():
+            if card.is_destroyed() or card.is_enemy: continue
+            potential += card.stats().flow.get_outflow()
+        return potential
 
     def store_to_other_cards(self, card: Card) -> None:
         for other in self.deck.sorted_by_distance(card):
@@ -107,7 +124,6 @@ class Game:
                     for stuff in required.separate():
                         self.log.write(f"{stuff.accent()} {card} requires {stuff.value()} {stuff.name()}")
                     continue
-
                 if card.is_enemy:
                     card.action = color_text("HOSTILE", Color.RED)
                 else:
@@ -143,18 +159,22 @@ class Game:
             self.add_enemy()
 
         if self.deck.get_core().is_destroyed():
-            game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER! Time - {get_time()}{Color.WHITE.value}"
+            game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER! Time - {get_time():.2f}s{Color.WHITE.value}"
             # self.log.write(game_over_message)
             return game_over_message
 
         for card in self.deck.cards:
             if card.name == "ULTIMATE MEGASTRUCTURE":
-                win_message = f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE AND WON THE GAME! Time - {get_time()}{Color.WHITE.value}"
+                win_message = f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE AND WON THE GAME! Time - {get_time():.2f}s{Color.WHITE.value}"
                 # self.log.write(win_message)
                 return win_message
 
         self.log.write(f"\n>> TURN {self.turn}\n")
         self.turn += 1
+
+        self.tracker.storage = self.get_available_box()
+        self.tracker.demand += self.get_demand()
+        self.tracker.potential += self.get_potential()
         return None
 
     def can_buy(self, price: Box) -> bool:
@@ -164,6 +184,7 @@ class Game:
         if not self.can_buy(card.stats().price):
             raise Exception(f"Can't buy {card.name} for {card.stats().price}")
         card.log = self.log
+        card.tracker = self.tracker
         self.collect_purchase_from_other_cards(card)
         self.card_index = self.deck.add_card(card, is_below=self.build_direction)
         self.log.write(f"| Constructed {card}")
@@ -175,6 +196,7 @@ class Game:
         for stuff in sell_price.separate():
             self.log.write(f"{stuff.accent()} {card} was sold for {stuff.value()} {stuff.name()}")
         card.storage += sell_price
+        self.tracker.production += sell_price
         self.store_to_other_cards(card)
         del self.deck.cards[index]
         if not self.card_index in range(len(self.deck.cards)):
@@ -184,13 +206,13 @@ class Game:
         card = self.deck.cards[index]
         if card.is_enemy: return False
         if card.level == len(card.levels):
-            self.log.write(f"UPGRADE: {card} cannot be upgraded any further")
+            # self.log.write(f"UPGRADE: {card} cannot be upgraded any further")
             return False
         if not card.next_stats().unlocked:
-            self.log.write(f"UPGRADE: {card} has not unlocked [LVL{card.level + 1}]")
+            #self.log.write(f"UPGRADE: {card} has not unlocked [LVL{card.level + 1}]")
             return False
         if self.get_available_box() < card.next_stats().price:
-            self.log.write(f"UPGRADE: {card} does not have enough resources to upgrade")
+            #self.log.write(f"UPGRADE: {card} does not have enough resources to upgrade")
             return False
         return True
 
@@ -218,6 +240,7 @@ class Game:
             raise Exception(f"Can't research {card.name}!")
         levelled_card = copy.deepcopy(card)
         levelled_card.log = self.log
+        levelled_card.tracker = self.tracker
         self.collect_research_from_other_cards(levelled_card)
         card.stats().unlocked = True
         if card.stats().level == 1:
@@ -341,7 +364,6 @@ class Shop:
     def change_index(self, index: int) -> str:
         self.index += index
         if self.index not in range(len(self.inventory)):
-            # print(f"SHOP: {self.index} is invalid")
             self.index -= index
         card = self.inventory[self.index]
         return self.select_message(card)
@@ -357,7 +379,7 @@ class Shop:
 
     def select_message(self, card: Card) -> str:
         # card = self.inventory[self.index]
-        return f"SHOP: Selecting {card} for {card.stats().price}"
+        return f"Buying {card} for {card.stats().price}"
 
 
 class Research(Shop):
@@ -375,7 +397,6 @@ class Research(Shop):
         self.index = 0
 
     def completed(self) -> bool:
-        self.update()
         return len(self.inventory) == 0
 
     def display(self) -> str:
@@ -385,4 +406,4 @@ class Research(Shop):
         return "RESEARCH\n\n" + info.display()
 
     def select_message(self, card: Card) -> str:
-        return f"RESEARCH: Selecting {card} for {card.stats().research_cost}"
+        return f"Researching {card} for {card.stats().research_cost}"

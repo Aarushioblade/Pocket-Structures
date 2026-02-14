@@ -3,6 +3,7 @@ import copy
 from color import Color
 from display import Info, LogPanel
 from stuff import Box, Flow
+from tracker import Tracker
 
 SHOW_ALL: bool = True
 
@@ -32,6 +33,7 @@ class Card:
         self.destroyed: bool = False
         self.id: int = Card.ID
         self.log: LogPanel | None = None
+        self.tracker: Tracker = Tracker()
         self.action: str | None = None
         Card.ID += 1
 
@@ -96,6 +98,7 @@ class Card:
         self.storage += self.outflow
         if self.outflow == Flow(): return
         # self.write(f"{self.name} produced {self.outflow}")
+        self.tracker.production += self.outflow
         for stuff in self.outflow.separate():
             self.write(f"{stuff.accent()} {self} produced {stuff.value()} {stuff.name()}")
 
@@ -110,7 +113,6 @@ class Card:
             excess += self.storage.only(Box.Types.SHIELD) % Flow(shield=50)
         if excess == Flow(): return
         self.storage -= excess
-        # self.write(f"RESET: {self.name} -> {excess} -> Void")
         if self.is_destroyed():
             self.write(f"{Color.RED}{self.name} destroyed!{Color.WHITE}")
 
@@ -120,7 +122,6 @@ class Card:
         excess: Flow = self.get_excess().only(Box.Types.BOOST)
         if excess == Flow(): return
         self.storage -= excess
-        #self.write(f"RESET: {self.name} -> {excess} -> Void")
 
     def get_excess(self):
         excess: Box = self.storage - self.stats().capacity.to_flow()
@@ -132,7 +133,7 @@ class Card:
         if transfer == Flow(): return
         other.storage -= transfer
         self.charge += transfer
-        # self.write(f"{self.name} received {transfer} from {other.name} (X/X)")
+        self.tracker.consumption += transfer
         for stuff in transfer.separate():
             if stuff.type is None: continue
             inflow = self.stats().flow.get_inflow().stuff[stuff.type.value]
@@ -149,14 +150,11 @@ class Card:
         if transfer == Flow(): return
         other.storage -= transfer
         self.purchased += transfer
+        self.tracker.consumption += transfer
         if self.level == 1:
-            # self.write(f"PURCHASE: {self.name} <- {transfer} <- {other.name}")
-            # spent x to build
             for stuff in transfer.separate():
                 self.write(f"{stuff.accent()} {other} contributed {stuff.value()} {stuff.name()} to build {self}")
         else:
-            # self.write(f"UPGRADE: {self.name} <- {transfer} <- {other.name}")
-            # spent x to upgrade
             for stuff in transfer.separate():
                 self.write(f"{stuff.accent()} {other} contributed {stuff.value()} {stuff.name()} to upgrade {self}")
 
@@ -166,9 +164,7 @@ class Card:
         if transfer == Flow(): return
         other.storage -= transfer
         self.stats().researched += transfer
-        # self.write(f"RESEARCH: {self.name} <- {transfer} <- {other.name}")
-        # spent x to research
-
+        self.tracker.consumption += transfer
         for stuff in transfer.separate():
             self.write(f"{stuff.accent()} {other} contributed {stuff.value()} {stuff.name()} to research {self}")
 
@@ -183,7 +179,7 @@ class Card:
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
-        #self.write(f"STORE: {self.name} -> {transfer} -> {other.name}")
+        # self.tracker.storage += transfer
         for stuff in transfer.separate():
             self.write(f"{stuff.accent()} {other} stored {stuff.value()} {stuff.name()} from {self}")
 
@@ -210,7 +206,6 @@ class Card:
         bonus_flow: Flow = self.outflow.without(Box.Types.BOOST).boosted(boost)
         if bonus_flow == Flow(): return
         self.storage += bonus_flow
-        # self.write(f"{self.name} produced {bonus_flow} extra ")
         for stuff in bonus_flow.separate():
             self.write(f"{stuff.accent()} {self} produced {stuff.value()} extra {stuff.name()}")
 
@@ -224,7 +219,7 @@ class Card:
             bonus_flow = -bonus_flow.get_inflow()
         if bonus_flow == Flow(): return
         other.storage += bonus_flow
-        # self.write(f"{self.name} sent {flow} extra {flow.name()} to {other.name}")
+        self.tracker.bonus_production += bonus_flow
         for stuff in bonus_flow.separate():
             self.write(f"{stuff.accent()} {self} sent {stuff.value()} extra {stuff.name()} to {other}")
 

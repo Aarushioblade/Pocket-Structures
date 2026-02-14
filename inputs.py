@@ -1,9 +1,8 @@
 from pynput import keyboard as kb
-import time
 from calculator import Game, Shop, Research
 from card import Card
 from menu import Menu
-from display import Display, Panel, InfoPanel
+from display import Display, Panel, InfoPanel, SummaryPanel
 from stuff import Box
 from template import Template
 
@@ -15,10 +14,13 @@ research = Research()
 shop.update()
 research.update()
 display = Display()
+display.separator = " | "
+display.height = 41
 home_panel = Panel(50)
-shop_panel = Panel(60)
+shop_panel = Panel(50)
 info_panel = InfoPanel(35)
-display.add(info_panel, home_panel, shop_panel, game.log)
+summary_panel = SummaryPanel(23, game.tracker)
+display.add(info_panel, home_panel, summary_panel, shop_panel, game.log)
 structure_to_swap: Card | None = None
 shift_held: bool = False
 game_started: bool = False
@@ -53,25 +55,27 @@ def move(direction: int):
         game.change_card_index(direction)
         card = game.deck.cards[game.card_index]
         if card.is_interactable or card.is_destroyed():
-            caption = f"SELL: Selling {card} for {card.sell_price()}"
+            caption = f"Selling {card} for {card.sell_price()}"
         else:
             if card.is_enemy:
-                caption = f"SEll: Who's buying this?"
+                caption = f"Who's buying this?"
             elif card.is_core:
-                caption = f"SELL: You can't sell the core"
+                caption = f"You can't sell the core"
             else:
-                caption = f"SELL: This structure cannot be sold"
+                caption = f"This structure cannot be sold"
         shop_panel.set(caption)
         info_panel.load(card.name)
     elif menu is Menu.UPGRADE:
         game.change_card_index(direction)
         card = game.deck.cards[game.card_index]
         if card.at_max_level():
-            caption = f"UPGRADE: {card} cannot be levelled up any further"
+            caption = f"{card} cannot be levelled up any further"
         elif not card.next_level_unlocked():
-            caption = f"UPGRADE: {card} has not unlocked [LVL{card.level + 1}]"
+            caption = f"{card} has not unlocked [LVL{card.level + 1}]"
+        elif not card.is_enemy:
+            caption = f"{card} -> [LVL{card.next_stats().level}] for {card.next_stats().price}"
         else:
-            caption = f"UPGRADE: {card} -> [LVL{card.next_stats().level}] for {card.next_stats().price}"
+            caption = f"Please do not upgrade {card}"
         shop_panel.set(caption)
         info_panel.load(card.name)
     elif menu is Menu.SWAP:
@@ -117,6 +121,8 @@ def exit_menu():
     global message
     if not game_complete:
         message = game.calculate()
+        summary_panel.rewrite()
+        game.tracker.reset()
     global caption
     caption = ""
 
@@ -133,7 +139,7 @@ def space():
                 set_menu(Menu.SHOP_CONFIRM)
                 caption = f"CONFIRM: You are buying {shop.selected_card()}"
             else:
-                caption = f"SHOP: Cannot buy {shop.selected_card()}"
+                caption = f"Cannot buy {shop.selected_card()}!"
             shop_panel.set(caption)
 
         case Menu.SHOP_CONFIRM:
@@ -146,7 +152,7 @@ def space():
                 set_menu(Menu.SELL_CONFIRM)
                 caption = f"CONFIRM: You are selling {card}"
             else:
-                caption = f"SELL: Cannot sell {card}"
+                caption = f"Cannot sell {card}!"
             shop_panel.set(caption)
 
         case Menu.SELL_CONFIRM:
@@ -155,15 +161,15 @@ def space():
 
         case Menu.RESEARCH:
             if research.completed():
-                caption = f"RESEARCH: You have completed all available research!"
+                caption = f"Congratulations! You have completed all available research!"
                 shop_panel.set(caption)
                 return
             card = research.selected_card()
             if game.can_research(card):
                 set_menu(Menu.RESEARCH_CONFIRM)
-                caption = f"RESEARCH: You are researching {card}"
+                caption = f"CONFIRM: You are researching {card}"
             else:
-                caption = f"RESEARCH: Cannot research {card}"
+                caption = f"Cannot research {card}!"
             shop_panel.set(caption)
 
         case Menu.RESEARCH_CONFIRM:
@@ -176,9 +182,9 @@ def space():
             card = game.deck.cards[game.card_index]
             if game.can_upgrade(game.card_index):
                 set_menu(Menu.UPGRADE_CONFIRM)
-                caption = f"UPGRADE: You are upgrading {card} to [LVL{card.next_stats().level}]"
+                caption = f"CONFIRM: You are upgrading {card} to [LVL{card.next_stats().level}]"
             else:
-                caption = f"UPGRADE: Cannot upgrade {card}"
+                caption = f"Cannot upgrade {card}!"
             shop_panel.set(caption)
 
         case Menu.UPGRADE_CONFIRM:
@@ -189,13 +195,13 @@ def space():
             global structure_to_swap
             card = game.deck.cards[game.card_index]
             if card.is_destroyed() or not card.is_interactable:
-                caption = f"SWAP: {card} cannot be moved"
+                caption = f"{card} cannot be moved"
             elif structure_to_swap:
                 set_menu(Menu.SWAP_CONFIRM)
-                caption = "SWAP: Confirm?"
+                caption = f"CONFIRM: You are swapping {card} with {structure_to_swap}"
             else:
                 structure_to_swap = card
-                caption = f"SWAP: Select another card to swap {card} with"
+                caption = f"Select another card to swap {card} with"
             shop_panel.set(caption)
 
         case Menu.SWAP_CONFIRM:

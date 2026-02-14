@@ -2,6 +2,7 @@ import copy
 
 from color import Color
 from stuff import Box
+from tracker import Tracker
 
 
 def rl_len(text) -> int:
@@ -58,6 +59,7 @@ class Display:
         canvas: str = ""
         for line in lines:
             canvas += line + '\n'
+        print('\n')
         print(canvas)
 
     def add(self, *panels: Panel):
@@ -102,9 +104,9 @@ class Info:
         self.prefix_default: str = prefix
 
     def add(self, text: str, value: str, color: Color | None = None):
-        self.lines.append(text)
+        self.lines.append(str(text))
         self.colors.append(color)
-        self.values.append(value)
+        self.values.append(str(value))
 
     def __str__(self) -> str:
         return self.display()
@@ -113,7 +115,7 @@ class Info:
         string: str = '\n'
         for text, color, value in zip(self.lines, self.colors, self.values):
             current_width = rl_len(text) + rl_len(value)
-            if "-" in value: color = Color.RED
+            if "-" in value and color: color = Color.RED
             if color is not None:
                 current_width += 5
                 string += " " * rl_len(self.prefix_default)
@@ -254,6 +256,31 @@ class LogPanel(Panel):
     def rem_stuff_filter(self, stuff: str):
         self.stuff_fiter.remove(stuff)
         self.filter()
+
+
+class SummaryPanel(Panel):
+    def __init__(self, width: int, tracker: Tracker):
+        super().__init__(width)
+        self.tracker = tracker
+
+    def rewrite(self):
+        self.clear()
+        for stuff in Box.Types:
+            production = self.tracker.production.type_of(stuff)
+            consumption = -self.tracker.consumption.type_of(stuff)
+            storage = self.tracker.storage.type_of(stuff)
+            if not (production or consumption or storage):
+                if not stuff in [Box.Types.HEALTH, Box.Types.MATERIAL, Box.Types.STARBIT, Box.Types.ENERGY]:
+                    continue
+            color = Box.colors[stuff]
+            self.write(f"\n{color}{stuff.name}{Color.WHITE}")
+            if production > 0: production = f"{production:+}"
+            info = Info(self.width)
+            info.add("Production", production, color)
+            info.add("Consumption", consumption, color)
+            info.add("Demand", consumption, color)
+            info.add("Storage", storage, color)
+            self.write(info.display())
 
 
 if __name__ == "__main__":

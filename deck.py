@@ -7,12 +7,14 @@ class Deck:
     def __init__(self, cards: list[Card] = None):
         self.cards: list[Card] = []
         self.log = None
+        self.tracker = None
         if cards is not None: self.cards = cards
 
     def add_card(self, other: Card, is_below: bool = True) -> int:
         if not isinstance(other, Card): raise TypeError
         new_card = copy.deepcopy(other)
         new_card.log = self.log
+        new_card.tracker = self.tracker
         if is_below:
             self.cards.append(new_card)
         else:

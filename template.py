@@ -5,7 +5,7 @@ from stuff import Box, Flow
 
 
 class Template(Enum):
-    CORE = Card("Core", Box(health=360, starbit=120000), [
+    CORE = Card("Core", Box(health=360, starbit=120), [
         Level(1, Box(health=360, material=12, energy=72, starbit=15000, shield=120, boost=0),
               Flow(energy=+6), price=Box(), unlocked=True, effect_range=0, effect_flow=Flow(health=+2)),
         Level(2, Box(health=720, material=36, energy=144, starbit=15000, shield=360, boost=0),
@@ -106,7 +106,7 @@ class Template(Enum):
 
     BOOST = Card("Booster", Box(health=48), [
         Level(1, Box(health=48, shield=48), Flow(energy=-48, material=-2), Box(starbit=456), False, 1, Flow(boost=+50),
-              research_cost=Box(starbit=852)),
+              research_cost=Box(starbit=852), precondition=[(SHIELD, 1)]),
         Level(2, Box(health=54, shield=54), Flow(energy=-60, material=-4), Box(starbit=516), False, 1, Flow(boost=+100),
               research_cost=Box(starbit=1284)),
         Level(3, Box(health=60, shield=60), Flow(energy=-96, material=-8), Box(starbit=636), False, 2, Flow(boost=+150),
@@ -116,8 +116,7 @@ class Template(Enum):
     FINALE = Card("ULTIMATE MEGASTRUCTURE", Box(health=1728), [
         Level(1, Box(health=1728, material=1728, energy=1728, shield=1728),
               Flow(energy=+1728, material=+1728, boost=+1728, shield=+1728, starbit=+1728), Box(starbit=15000), False,
-              12,
-              Flow(health=+1728), Box(starbit=15000), precondition=[(BOOST, 1)])
+              12, Flow(health=+1728), Box(starbit=15000), precondition=[(BOOST, 1)])
     ], 0)
 
 
