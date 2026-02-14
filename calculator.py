@@ -71,6 +71,13 @@ class Game:
             potential += card.stats().flow.get_outflow()
         return potential
 
+    def get_capacity(self) -> Box:
+        capacity = Box()
+        for card in self.deck.sorted_by_distance():
+            if card.is_destroyed() or card.is_enemy: continue
+            capacity += card.stats().capacity
+        return capacity
+
     def store_to_other_cards(self, card: Card) -> None:
         for other in self.deck.sorted_by_distance(card):
             if other.is_destroyed(): continue
@@ -115,6 +122,7 @@ class Game:
                     if not self.enemies_in_range(card):
                         card.action = "IDLE"
                         continue
+                self.tracker.demand += card.inflow
                 if self.get_available_box() < card.inflow:
                     card.action = color_text("LACK RESOURCES", Color.RED)
                     # print out required
@@ -173,8 +181,8 @@ class Game:
         self.turn += 1
 
         self.tracker.storage = self.get_available_box()
-        self.tracker.demand += self.get_demand()
-        self.tracker.potential += self.get_potential()
+        self.tracker.potential = self.get_potential()
+        self.tracker.capacity = self.get_capacity()
         return None
 
     def can_buy(self, price: Box) -> bool:

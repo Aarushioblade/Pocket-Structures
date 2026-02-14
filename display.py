@@ -268,18 +268,24 @@ class SummaryPanel(Panel):
         for stuff in Box.Types:
             production = self.tracker.production.type_of(stuff)
             consumption = -self.tracker.consumption.type_of(stuff)
+            potential = self.tracker.potential.type_of(stuff)
+            demand = -self.tracker.demand.type_of(stuff)
             storage = self.tracker.storage.type_of(stuff)
+            capacity = self.tracker.capacity.type_of(stuff)
             if not (production or consumption or storage):
                 if not stuff in [Box.Types.HEALTH, Box.Types.MATERIAL, Box.Types.STARBIT, Box.Types.ENERGY]:
                     continue
             color = Box.colors[stuff]
             self.write(f"\n{color}{stuff.name}{Color.WHITE}")
             if production > 0: production = f"{production:+}"
+            if potential > 0: potential = f"{potential:+}"
             info = Info(self.width)
             info.add("Production", production, color)
+            if potential != production: info.add("Potential", potential, color)
             info.add("Consumption", consumption, color)
-            info.add("Demand", consumption, color)
+            if demand != consumption: info.add("Demand", demand, color)
             info.add("Storage", storage, color)
+            info.add("Capacity", capacity, color)
             self.write(info.display())
 
 
