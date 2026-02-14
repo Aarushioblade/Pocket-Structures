@@ -276,6 +276,9 @@ def swap_menu():
     move(0)
 
 
+def summary_menu():
+    summary_panel.hidden = not summary_panel.hidden
+
 def log_menu():
     game.log.hidden = not game.log.hidden
     # game.log.add_stuff_filter(Box.Types.STARBIT.name)
@@ -296,16 +299,22 @@ def show_key_actions():
         string += "[3] Research | "
         string += "[4] Upgrade | "
         string += "[5] Swap | "
+        if summary_panel.hidden:
+            string += "[6] Show Summary | "
+        else:
+            string += "[6] Close Summary | "
         if game.log.hidden:
-            string += "[6] Show Logs | "
+            string += "[7] Show Logs | "
         else:
             string += "[H-M] Select Filter | "
             string += "[SHIFT] Multi-Filter | "
-            string += "[6] Close Logs | "
+            string += "[7] Close Logs | "
         if info_panel.hidden:
-            string += "[7] Show Info "
+            string += "[8] Show Info "
         else:
-            string += "[7] Close Info "
+            string += "[8] Close Info "
+
+
     else:
         string += "[UP/DOWN] Change Selection | "
         if menu in [Menu.SHOP_CONFIRM, Menu.SELL_CONFIRM, Menu.RESEARCH_CONFIRM, Menu.UPGRADE_CONFIRM]:
@@ -329,7 +338,7 @@ def show_key_actions():
     if message is not None:
         global game_complete
         game_complete = True
-        print('\n', message, end="")
+        print('\n', message, end="", sep="")
 
 
 keybinds = {
@@ -381,8 +390,10 @@ def on_press(key):
                 case 5:
                     swap_menu()
                 case 6:
-                    log_menu()
+                    summary_menu()
                 case 7:
+                    log_menu()
+                case 8:
                     help_menu()
         elif key.isalpha():
             key = key.upper()

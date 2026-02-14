@@ -167,13 +167,14 @@ class Game:
             self.add_enemy()
 
         if self.deck.get_core().is_destroyed():
-            game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER! Time - {get_time():.2f}s{Color.WHITE.value}"
+            game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER! Time - {get_time():.2f}s {Color.WHITE.value}"
             # self.log.write(game_over_message)
             return game_over_message
 
         for card in self.deck.cards:
             if card.name == "ULTIMATE MEGASTRUCTURE":
-                win_message = f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE AND WON THE GAME! Time - {get_time():.2f}s{Color.WHITE.value}"
+                win_message = (f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE"
+                               f" AND WON THE GAME! Time - {get_time():.2f}s {Color.WHITE.value}")
                 # self.log.write(win_message)
                 return win_message
 
@@ -310,6 +311,8 @@ class Game:
                 prefix = color_text(prefix, Color.GRAY)
             if card.is_enemy or card.action.count(Color.RED.value):
                 prefix = color_text(prefix, Color.RED)
+            elif card.is_core:
+                prefix = color_text(prefix, Color.WHITE)
             elif card in cards_in_range:
                 for stuff in selected_card.stats().effect_flow.separate():
                     prefix = color_text(prefix, stuff.color())
