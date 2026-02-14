@@ -5,6 +5,7 @@ from stuff import Box, Flow
 
 
 class Template(Enum):
+
     CORE = Card("Core", Box(health=360, starbit=120), [
         Level(1, Box(health=360, material=12, energy=72, starbit=15000, shield=120, boost=0),
               Flow(energy=+6), price=Box(), unlocked=True, effect_range=0, effect_flow=Flow(health=+2)),
@@ -37,10 +38,10 @@ class Template(Enum):
     CANNON = Card("Star Cannon", Box(health=132), [
         Level(1, Box(health=132, shield=132), Flow(energy=-6, material=-3), Box(starbit=24), False, 1, Flow(health=-3),
               research_cost=Box(starbit=8)),
-        Level(2, Box(health=138, shield=138), Flow(energy=-12, material=-6), Box(starbit=36), False, 1,
+        Level(2, Box(health=138, shield=138), Flow(energy=-12, material=-6), Box(starbit=36), False, 2,
               Flow(health=-12),
               research_cost=Box(starbit=72)),
-        Level(3, Box(health=144, shield=144), Flow(energy=-24, material=-12), Box(starbit=48), False, 1,
+        Level(3, Box(health=144, shield=144), Flow(energy=-24, material=-12), Box(starbit=48), False, 3,
               Flow(health=-36),
               research_cost=Box(starbit=216)),
     ], 5, requires_enemies=True)
@@ -113,16 +114,8 @@ class Template(Enum):
               research_cost=Box(starbit=1476)),
     ], 8)
 
-    FINALE = Card("ULTIMATE MEGASTRUCTURE", Box(health=1728), [
+    FINALE = Card("Ultimate Megastructure", Box(health=1728), [
         Level(1, Box(health=1728, material=1728, energy=1728, shield=1728),
               Flow(energy=+1728, material=+1728, boost=+1728, shield=+1728, starbit=+1728), Box(starbit=15000), False,
               12, Flow(health=+1728), Box(starbit=15000), precondition=[(BOOST, 1)])
     ], 0)
-
-
-if __name__ == '__main__':
-
-    for card in Template:
-        if not card.value.is_interactable:
-            print("NOT INTERACTABLE")
-        print(card.value)

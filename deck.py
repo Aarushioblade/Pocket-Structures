@@ -97,8 +97,6 @@ class Deck:
         for card in self.cards:
             if card.is_core:
                 return card
-        print("Core not found")
-        print(self.cards)
         return self.cards[0]
 
     def from_id(self, card_id: int) -> Card | None:
@@ -118,7 +116,6 @@ class Deck:
             local_closest_distance = -1
             for index, test in enumerate(self.cards):
                 if test.id in banned_id:
-                    # print(f"{test.id} is banned")
                     continue
                 distance = abs(index - start_index)
                 if local_closest_distance == -1 or distance <= local_closest_distance:
@@ -129,7 +126,6 @@ class Deck:
             new_cards.append(new)
             banned_id.append(new.id)
 
-        # print(f"Closest cards to {card.name}: \n{new_cards}")
         return new_cards
 
     def __copy__(self) -> Deck:

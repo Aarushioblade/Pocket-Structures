@@ -14,5 +14,5 @@ generators is recommended.
 The material it produces is
 commonly used in starbit
 production, though it could
-potentially be used to repair
-or assist with structures...
+potentially be used as
+ammunition, or regeneration...

@@ -2,18 +2,15 @@ import copy
 import random
 import time
 
+from card import Card, Level
 from color import Color
 from deck import Deck
 from display import Info, LogPanel
 from menu import Menu
 from stuff import Box, Flow
 from template import Template
-from card import Card, Level
 from tracker import Tracker
 
-
-# TODO:
-# production summary
 
 def color_text(text: str, color: Color) -> str:
     return f"{color.value}{text}{Color.WHITE.value}"
@@ -24,6 +21,7 @@ start_time = time.time()
 
 def get_time():
     return time.time() - start_time
+
 
 class Game:
     def __init__(self, deck: Deck = None):
@@ -56,13 +54,6 @@ class Game:
             if card.is_destroyed() or card.is_enemy: continue
             available_box += card.storage.to_flow()
         return available_box
-
-    def get_demand(self) -> Box:
-        demand = Box()
-        for card in self.deck.sorted_by_distance():
-            if card.is_destroyed() or card.is_enemy: continue
-            demand += card.stats().flow.get_inflow()
-        return demand
 
     def get_potential(self) -> Box:
         potential = Box()
@@ -122,13 +113,20 @@ class Game:
                     if not self.enemies_in_range(card):
                         card.action = "IDLE"
                         continue
+                if card.stats().effect_flow.get_outflow().only(Box.Types.HEALTH) != Flow():
+                    if card.outflow == Flow():
+                        healing: bool = False
+                        for other in self.deck.in_range(card):
+                            if other.storage.only(Box.Types.HEALTH) < other.stats().capacity.only(Box.Types.HEALTH):
+                                healing = True
+                        if not healing:
+                            card.action = "IDLE"
+                            continue
                 self.tracker.demand += card.inflow
                 if self.get_available_box() < card.inflow:
                     card.action = color_text("LACK RESOURCES", Color.RED)
-                    # print out required
                     required: Box = self.get_available_box() - card.inflow
                     required: Flow = -required.to_flow().get_inflow()
-                    # self.log.write(f"{Color.RED}{card} lacks resources!{Color.WHITE}")
                     for stuff in required.separate():
                         self.log.write(f"{stuff.accent()} {card} requires {stuff.value()} {stuff.name()}")
                     continue
@@ -166,24 +164,22 @@ class Game:
         if random.random() < self.enemy_spawn_rate:
             self.add_enemy()
 
+        self.tracker.storage = self.get_available_box()
+        self.tracker.potential = self.get_potential()
+        self.tracker.capacity = self.get_capacity()
+
         if self.deck.get_core().is_destroyed():
             game_over_message = f"{Color.MAGENTA.value}CORE DESTROYED - GAME OVER! Time - {get_time():.2f}s {Color.WHITE.value}"
-            # self.log.write(game_over_message)
             return game_over_message
-
         for card in self.deck.cards:
-            if card.name == "ULTIMATE MEGASTRUCTURE":
+            if card.name == "Ultimate Megastructure":
                 win_message = (f"{Color.MAGENTA.value}CONGRATULATIONS - YOU HAVE BUILT THE ULTIMATE MEGASTRUCTURE"
                                f" AND WON THE GAME! Time - {get_time():.2f}s {Color.WHITE.value}")
-                # self.log.write(win_message)
                 return win_message
 
         self.log.write(f"\n>> TURN {self.turn}\n")
         self.turn += 1
 
-        self.tracker.storage = self.get_available_box()
-        self.tracker.potential = self.get_potential()
-        self.tracker.capacity = self.get_capacity()
         return None
 
     def can_buy(self, price: Box) -> bool:
@@ -197,7 +193,6 @@ class Game:
         self.collect_purchase_from_other_cards(card)
         self.card_index = self.deck.add_card(card, is_below=self.build_direction)
         self.log.write(f"| Constructed {card}")
-
 
     def sell(self, index: int) -> None:
         card = self.deck.cards[index]
@@ -215,13 +210,10 @@ class Game:
         card = self.deck.cards[index]
         if card.is_enemy: return False
         if card.level == len(card.levels):
-            # self.log.write(f"UPGRADE: {card} cannot be upgraded any further")
             return False
         if not card.next_stats().unlocked:
-            #self.log.write(f"UPGRADE: {card} has not unlocked [LVL{card.level + 1}]")
             return False
         if self.get_available_box() < card.next_stats().price:
-            #self.log.write(f"UPGRADE: {card} does not have enough resources to upgrade")
             return False
         return True
 
@@ -266,14 +258,10 @@ class Game:
     def change_card_index(self, amount: int) -> None:
         self.card_index += amount
         if self.card_index not in range(len(self.deck.cards)):
-            # print(f"FOCUS: {self.card_index} is invalid")
             self.card_index -= amount
-        #card = self.deck.cards[self.card_index]
-        # print(f"FOCUS: {self.card_index} ({card.name} LVL{card.level})")
 
     def set_build_direction(self, direction: bool) -> None:
         self.build_direction = direction
-        #print(f"BUILD_UP: {self.build_direction}")
 
     def display(self, menu: Menu) -> str:
         string: str = ""
@@ -318,9 +306,6 @@ class Game:
                     prefix = color_text(prefix, stuff.color())
 
             string += card.display(selected, width=48, name_value=value).display(prefix) + '\n'
-            # string += str(card)
-            # for line in card.display(selected).split("\n"):
-            #    string += "    " + line + "\n"
 
         if in_shop and self.build_direction:
             string += "+ Preview \n"

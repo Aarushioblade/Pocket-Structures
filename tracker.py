@@ -10,7 +10,6 @@ class Tracker:
         self.consumption: Box = Box()
         self.demand: Box = Box()
         self.previous_storage: Box = Box()
-
         self.potential: Box = Box()
         self.storage: Box = Box()
         self.capacity: Box = Box()

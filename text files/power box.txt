@@ -8,3 +8,7 @@ but it is slightly weaker.
 When destroyed, it will attempt to
 store its energy somewhere else,
 but any excess will be lost.
+
+Researching the power box may lead
+to the development of much more
+powerful structures...

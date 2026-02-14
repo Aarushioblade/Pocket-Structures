@@ -1,2 +1,16 @@
-Launches projectiles at enemies,
-dealing damage to them.
+Launches projectiles at enemies
+to destroy them.
+
+The star cannon needs a bit of
+material for ammunition, as well
+as energy to propel it. Luckily,
+it will only attempt to consume
+resources when it detects enemies
+within attack range.
+
+Researchers across the galaxy are
+looking for destroyed enemies, in
+the interest of building stronger
+weapons against them. Thus, any
+enemies you destroy can be sold
+for starbits!

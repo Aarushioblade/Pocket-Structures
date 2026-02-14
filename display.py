@@ -147,8 +147,12 @@ class Info:
 class InfoPanel(Panel):
     def __init__(self, width: int):
         super().__init__(width)
+        self.current_directory: str = "intro"
 
     def load(self, directory: str):
+        if self.current_directory in ["game over", "game complete"]:
+            return
+        self.current_directory = directory
         self.clear()
         self.write(f"{directory.upper()}\n")
         with open(f"text files/{directory.lower()}.txt") as file:
@@ -265,8 +269,10 @@ class SummaryPanel(Panel):
 
     def rewrite(self):
         self.clear()
-        for stuff in Box.Types:
+        for i in range(len(Box.Types)):
+            stuff = Box.Types(i)
             production = self.tracker.production.type_of(stuff)
+            bonus_production = self.tracker.bonus_production.type_of(stuff)
             consumption = -self.tracker.consumption.type_of(stuff)
             potential = self.tracker.potential.type_of(stuff)
             demand = -self.tracker.demand.type_of(stuff)
@@ -279,20 +285,15 @@ class SummaryPanel(Panel):
             self.write(f"\n{color}{stuff.name}{Color.WHITE}")
             if production > 0: production = f"{production:+}"
             if potential > 0: potential = f"{potential:+}"
+            if bonus_production > 0:
+                total_production = f"{production}{Color.CYAN}{bonus_production:+}{Color.WHITE}"
+            else:
+                total_production = production
             info = Info(self.width)
-            info.add("Production", production, color)
+            info.add("Production", total_production, color)
             if potential != production: info.add("Potential", potential, color)
             info.add("Consumption", consumption, color)
             if demand != consumption: info.add("Demand", demand, color)
             info.add("Storage", storage, color)
             info.add("Capacity", capacity, color)
             self.write(info.display())
-
-
-if __name__ == "__main__":
-    display = Display()
-    display.add(Panel(30))
-    display.add(Panel(30))
-    display.panels[0].write(f"Hello World!")
-    display.panels[1].write(f"{Color.RED.value}Goodbye World!{Color.WHITE.value}")
-    display.render()

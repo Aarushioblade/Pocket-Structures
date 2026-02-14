@@ -9,3 +9,7 @@ structures.
 When destroyed, it will attempt to
 store its stored material somewhere
 else, but any excess will be lost.
+
+Researching the storage structure
+may lead to the development of
+more useful structures...

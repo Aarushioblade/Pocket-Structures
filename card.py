@@ -21,7 +21,6 @@ class Card:
         self.is_interactable: bool = is_interactable
         self.is_enemy: bool = is_enemy
         self.is_core: bool = is_core
-
         self.level: int = 1
         self.inflow: Flow = Flow()
         self.outflow: Flow = Flow()
@@ -103,8 +102,9 @@ class Card:
             self.write(f"{stuff.accent()} {self} produced {stuff.value()} {stuff.name()}")
 
     def is_destroyed(self):
-        if self.destroyed: return True
-        self.destroyed = self.storage.stuff[Box.Types.HEALTH.value] <= 0
+        if self.storage.stuff[Box.Types.HEALTH.value] < 0:
+            self.storage.stuff[Box.Types.HEALTH.value] = 0
+        self.destroyed = self.storage.stuff[Box.Types.HEALTH.value] == 0
         return self.destroyed
 
     def reset_storage(self) -> None:
@@ -114,6 +114,7 @@ class Card:
         if excess == Flow(): return
         self.storage -= excess
         if self.is_destroyed():
+            self.action = f"{Color.GRAY}DESTROYED{Color.WHITE}"
             self.write(f"{Color.RED}{self.name} destroyed!{Color.WHITE}")
 
     def reset_status(self):
@@ -179,7 +180,6 @@ class Card:
         if transfer == Flow(): return
         self.storage -= transfer
         other.storage += transfer
-        # self.tracker.storage += transfer
         for stuff in transfer.separate():
             self.write(f"{stuff.accent()} {other} stored {stuff.value()} {stuff.name()} from {self}")
 
@@ -194,6 +194,10 @@ class Card:
         if flow == Flow(): return
         if not flow.only(Box.Types.SHIELD) == Flow():
             other.is_shielded = True
+        if self.is_enemy:
+            self.tracker.consumption -= flow
+        else:
+            self.tracker.production += flow
         for stuff in flow.separate():
             self.write(f"{stuff.accent()} {self} sent {stuff.value()} {stuff.name()} to {other}")
 
@@ -206,6 +210,7 @@ class Card:
         bonus_flow: Flow = self.outflow.without(Box.Types.BOOST).boosted(boost)
         if bonus_flow == Flow(): return
         self.storage += bonus_flow
+        self.tracker.bonus_production += bonus_flow
         for stuff in bonus_flow.separate():
             self.write(f"{stuff.accent()} {self} produced {stuff.value()} extra {stuff.name()}")
 
@@ -219,7 +224,10 @@ class Card:
             bonus_flow = -bonus_flow.get_inflow()
         if bonus_flow == Flow(): return
         other.storage += bonus_flow
-        self.tracker.bonus_production += bonus_flow
+        if self.is_enemy:
+            self.tracker.consumption -= bonus_flow
+        else:
+            self.tracker.bonus_production += bonus_flow
         for stuff in bonus_flow.separate():
             self.write(f"{stuff.accent()} {self} sent {stuff.value()} extra {stuff.name()} to {other}")
 
@@ -300,18 +308,6 @@ class Level:
         self.researched: Box = Box()
         self.precondition: list[tuple] | None = precondition
 
-    def __str__(self) -> str:
-        string: str = ""
-        string += f"| | Capacity: {self.capacity}\n"
-        string += f"| | Flow: {self.flow}\n"
-        string += f"| | Effect: {self.effect_flow}\n"
-        if SHOW_ALL:
-            string += f"| | Price: {self.price}\n"
-            string += f"| | Researched: {self.researched}\n"
-            string += f"| | Research Cost: {self.research_cost}\n"
-            string += f"| | Unlocked: {self.unlocked}\n"
-            string += f"| | Range: {self.range}\n"
-        return string
 
     def display(self) -> str:
         return str(self)

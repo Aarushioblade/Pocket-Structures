@@ -58,9 +58,9 @@ def move(direction: int):
             caption = f"Selling {card} for {card.sell_price()}"
         else:
             if card.is_enemy:
-                caption = f"Who's buying this?"
+                caption = f"Defeat it first!"
             elif card.is_core:
-                caption = f"You can't sell the core"
+                caption = f"You can't sell the core..."
             else:
                 caption = f"This structure cannot be sold"
         shop_panel.set(caption)
@@ -118,13 +118,22 @@ def exit_menu():
     structure_to_swap = None
     shop_panel.clear()
     shop_panel.hide()
+    global caption
+    caption = ""
     global message
+    global game_complete
     if not game_complete:
         message = game.calculate()
         summary_panel.rewrite()
         game.tracker.reset()
-    global caption
-    caption = ""
+        if message:
+            game_complete = True
+            if message.lower().count("game over"):
+                info_panel.load("game over")
+                on_press(kb.Key.enter)
+            elif message.lower().count("congratulations"):
+                info_panel.load("game complete")
+                on_press(kb.Key.enter)
 
 
 def space():
@@ -235,6 +244,7 @@ def set_menu(new_menu: Menu):
 
 
 def shop_menu():
+    if game_complete: return
     set_menu(menu.SHOP)
     shop_panel.clear()
     shop_panel.show()
@@ -243,6 +253,7 @@ def shop_menu():
 
 
 def sell_menu():
+    if game_complete: return
     set_menu(menu.SELL)
     shop_panel.clear()
     shop_panel.show()
@@ -251,6 +262,7 @@ def sell_menu():
 
 
 def research_menu():
+    if game_complete: return
     set_menu(menu.RESEARCH)
     shop_panel.clear()
     shop_panel.show()
@@ -259,6 +271,7 @@ def research_menu():
 
 
 def upgrade_menu():
+    if game_complete: return
     set_menu(menu.UPGRADE)
     shop_panel.clear()
     shop_panel.show()
@@ -267,6 +280,7 @@ def upgrade_menu():
 
 
 def swap_menu():
+    if game_complete: return
     set_menu(menu.SWAP)
     shop_panel.clear()
     shop_panel.show()
@@ -290,15 +304,17 @@ def help_menu():
 
 
 def show_key_actions():
+    global game_complete
     string: str = ""
     if menu is Menu.HOME:
         string += "[UP/DOWN] Change Selection | "
-        string += "[SPACE/ENTER] End Turn | "
-        string += "[1] Shop | "
-        string += "[2] Sell | "
-        string += "[3] Research | "
-        string += "[4] Upgrade | "
-        string += "[5] Swap | "
+        if not game_complete:
+            string += "[SPACE/ENTER] End Turn | "
+            string += "[1] Shop | "
+            string += "[2] Sell | "
+            string += "[3] Research | "
+            string += "[4] Upgrade | "
+            string += "[5] Swap | "
         if summary_panel.hidden:
             string += "[6] Show Summary | "
         else:
@@ -306,15 +322,13 @@ def show_key_actions():
         if game.log.hidden:
             string += "[7] Show Logs | "
         else:
-            string += "[H-M] Select Filter | "
+            string += "[QWERTY] Select Filter | "
             string += "[SHIFT] Multi-Filter | "
             string += "[7] Close Logs | "
         if info_panel.hidden:
             string += "[8] Show Info "
         else:
             string += "[8] Close Info "
-
-
     else:
         string += "[UP/DOWN] Change Selection | "
         if menu in [Menu.SHOP_CONFIRM, Menu.SELL_CONFIRM, Menu.RESEARCH_CONFIRM, Menu.UPGRADE_CONFIRM]:
@@ -336,7 +350,6 @@ def show_key_actions():
     print(string, end="")
     global message
     if message is not None:
-        global game_complete
         game_complete = True
         print('\n', message, end="", sep="")
 
@@ -417,7 +430,7 @@ def on_press(key):
                 back()
             case kb.Key.esc:
                 return False
-            case kb.Key.shift:
+            case kb.Key.shift | kb.Key.shift_r:
                 global shift_held
                 shift_held = True
     finally:
@@ -430,7 +443,7 @@ def on_press(key):
 def on_release(key):
     try:
         global shift_held
-        if key == kb.Key.shift:
+        if key in [kb.Key.shift, kb.Key.shift_r]:
             shift_held = False
     except AttributeError:
         pass
